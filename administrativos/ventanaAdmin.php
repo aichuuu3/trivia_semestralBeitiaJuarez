@@ -64,7 +64,7 @@ $nombreUsuario = $_SESSION['usuario'];*/
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="../adminColaboradores/indexColaborador.php">
                         <span class="icon"><i class="fas fa-plus"></i></span>
                         <span>Administrar Colaboradores</span>
                     </a>
@@ -74,6 +74,7 @@ $nombreUsuario = $_SESSION['usuario'];*/
                         <span class="icon"><i class="fas fa-cog"></i></span>
                         <span>Configuración</span>
                     </a>
+                </li>
             </ul>
         </nav>
 

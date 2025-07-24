@@ -28,8 +28,6 @@ CREATE TABLE colaboradores (
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    especialidad VARCHAR(100), -- área de especialidad (ej: "Tecnología", "Historia")
-    preguntas_creadas INT DEFAULT 0,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     hora_inicio_actividad TIME DEFAULT '09:00:00', -- hora desde que está activo en el sistema
     activo BOOLEAN DEFAULT TRUE

@@ -294,3 +294,17 @@ input[type="button"]:active {
     color: #10b981;
     margin-top: 0.25rem;
 }
+
+/* Estilos para tabla con scroll horizontal */
+.table-scroll th {
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.table-scroll th:first-child {
+    min-width: 50px;
+}
+
+.table-scroll th:last-child {
+    min-width: 150px;
+}
