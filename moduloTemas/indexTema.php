@@ -121,6 +121,7 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                             <th>ID</th>
                             <th>Categoría</th>
                             <th>Descripción</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="resultado">

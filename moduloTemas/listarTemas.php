@@ -1,20 +1,33 @@
 <?php
 try {
     $data = file_get_contents("php://input");
+    $busqueda = trim($data);
     require "../bd/conexion.php";
     require "../bd/claseBD.php";
     
     $db = new DB();
-    $resultado = $db->listarTemas();
+    $temas = $db->listarTemas();
     
-    if (empty($resultado)) {
-        echo "<tr><td colspan='2' class='text-center'>No se encontraron temas</td></tr>";
+    if ($busqueda !== '') {
+        $temas = array_filter($temas, function($tema) use ($busqueda) {
+            return stripos($tema['nombre_tema'], $busqueda) !== false ||
+                   stripos($tema['descripcion'], $busqueda) !== false ||
+                   stripos((string)$tema['id_tema'], $busqueda) !== false;
+        });
+    }
+    
+    if (empty($temas)) {
+        echo "<tr><td colspan='4' class='text-center'>No se encontraron temas</td></tr>";
     } else {
-        foreach ($resultado as $tema) {
+        foreach ($temas as $tema) {
             echo "<tr>
                     <td>" . htmlspecialchars($tema['id_tema']) . "</td>
                     <td>" . htmlspecialchars($tema['nombre_tema']) . "</td>
-                <td>" . htmlspecialchars($tema['descripcion']) . "</td>
+                    <td>" . htmlspecialchars($tema['descripcion']) . "</td>
+                    <td>
+                        <button class='btn btn-success btn-sm' onclick='editarTema(" . $tema['id_tema'] . ")'>Editar</button>
+                        <button class='btn btn-danger btn-sm' onclick='eliminarTema(" . $tema['id_tema'] . ")'>Eliminar</button>
+                    </td>
                 </tr>";
         }
     }
