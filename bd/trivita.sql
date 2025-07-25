@@ -68,6 +68,34 @@ INSERT INTO `colaboradores` (`id`, `nombre`, `email`, `password`, `fecha_registr
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `imagenes`
+--
+
+CREATE TABLE `imagenes` (
+  `id_imagen` int(11) NOT NULL,
+  `nombre_archivo` varchar(255) NOT NULL,
+  `nombre_display` varchar(100) NOT NULL,
+  `ruta_completa` varchar(500) NOT NULL,
+  `extension` varchar(10) NOT NULL,
+  `tamaño_kb` int(11) DEFAULT NULL,
+  `tipo_imagen` enum('avatar','fondo','icono','decorativa') DEFAULT 'decorativa',
+  `descripcion` text DEFAULT NULL,
+  `activa` tinyint(1) DEFAULT 1,
+  `fecha_subida` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `imagenes`
+--
+
+INSERT INTO `imagenes` (`id_imagen`, `nombre_archivo`, `nombre_display`, `ruta_completa`, `extension`, `tamaño_kb`, `tipo_imagen`, `descripcion`, `activa`, `fecha_subida`) VALUES
+(1, 'avatar.png', 'Avatar por Defecto', '../img/avatar.png', 'png', 50, 'avatar', 'Imagen de avatar genérica para usuarios', 1, '2025-07-24 22:00:00'),
+(2, 'Skirk.jpg', 'Skirk', '../img/Skirk.jpg', 'jpg', 180, 'avatar', 'Avatar de personaje Skirk', 1, '2025-07-24 22:00:00'),
+(3, 'Tartaglia.jpg', 'Tartaglia', '../img/Tartaglia.jpg', 'jpg', 165, 'avatar', 'Avatar de personaje Tartaglia', 1, '2025-07-24 22:00:00');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `preguntas`
 --
 
@@ -325,6 +353,7 @@ CREATE TABLE `usuarios` (
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `cod_categoria` int(11) DEFAULT NULL,
+  `avatar` varchar(255) DEFAULT 'avatar.png',
   `monedas_totales` int(11) DEFAULT 100,
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
   `activo` tinyint(1) DEFAULT 1
@@ -334,10 +363,10 @@ CREATE TABLE `usuarios` (
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `nombre`, `email`, `password`, `cod_categoria`, `monedas_totales`, `fecha_registro`, `activo`) VALUES
-(1, 'Ana García', 'ana.garcia@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3, 100, '2025-07-24 22:00:00', 1),
-(2, 'Carlos Rodriguez', 'carlos.rodriguez@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2, 150, '2025-07-24 22:00:00', 1),
-(3, 'María López', 'maria.lopez@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 200, '2025-07-24 22:00:00', 1);
+INSERT INTO `usuarios` (`id`, `nombre`, `email`, `password`, `cod_categoria`, `avatar`, `monedas_totales`, `fecha_registro`, `activo`) VALUES
+(1, 'Ana García', 'ana.garcia@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3, 'avatar.png', 100, '2025-07-24 22:00:00', 1),
+(2, 'Carlos Rodriguez', 'carlos.rodriguez@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2, 'avatar.png', 150, '2025-07-24 22:00:00', 1),
+(3, 'María López', 'maria.lopez@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 'avatar.png', 200, '2025-07-24 22:00:00', 1);
 
 --
 -- Índices para tablas volcadas
@@ -355,6 +384,15 @@ ALTER TABLE `categoria`
 ALTER TABLE `colaboradores`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indices de la tabla `imagenes`
+--
+ALTER TABLE `imagenes`
+  ADD PRIMARY KEY (`id_imagen`),
+  ADD UNIQUE KEY `nombre_archivo` (`nombre_archivo`),
+  ADD KEY `tipo_imagen` (`tipo_imagen`),
+  ADD KEY `activa` (`activa`);
 
 --
 -- Indices de la tabla `preguntas`
@@ -399,6 +437,12 @@ ALTER TABLE `categoria`
 --
 ALTER TABLE `colaboradores`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `imagenes`
+--
+ALTER TABLE `imagenes`
+  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `preguntas`

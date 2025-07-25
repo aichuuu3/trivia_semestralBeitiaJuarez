@@ -1,3 +1,37 @@
+<?php
+session_start();
+
+// Verificar si el usuario está logueado
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: ../login/login.php");
+    exit();
+}
+
+// Incluir conexión a la base de datos
+require_once '../bd/conexion.php';
+
+// Obtener información del usuario desde la sesión
+$usuario_id = $_SESSION['usuario_id'];
+$usuario_nombre = $_SESSION['usuario_nombre'] ?? 'Usuario';
+$usuario_nivel = $_SESSION['usuario_nivel'] ?? 'Sin asignar';
+$usuario_monedas = $_SESSION['usuario_monedas'] ?? 0;
+$usuario_email = $_SESSION['usuario_email'] ?? '';
+
+// Obtener el avatar del usuario desde la base de datos
+$usuario_avatar = 'avatar.png'; // Valor por defecto
+try {
+    $stmt = $pdo->prepare("SELECT avatar FROM usuarios WHERE id = ?");
+    $stmt->execute([$usuario_id]);
+    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($resultado && !empty($resultado['avatar'])) {
+        $usuario_avatar = $resultado['avatar'];
+    }
+} catch (PDOException $e) {
+    // En caso de error, usar avatar por defecto
+    $usuario_avatar = 'avatar.png';
+}
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -49,9 +83,275 @@
         button:hover {
             transform: translateY(-2px);
         }
+        
+        /* Estilos para el avatar clickeable */
+        .circulo-avatar:hover .avatar-imagen {
+            border-color: rgba(255,255,255,0.5) !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+        }
+        
+        .circulo-avatar:hover .icono-editar-avatar {
+            opacity: 1 !important;
+        }
+        
+        /* Estilos del modal de avatar */
+        .modal-avatar {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-30px) scale(0.9);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-contenido {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: #333;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #533483;
+        }
+        
+        .cerrar-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cerrar-modal:hover {
+            color: #533483;
+            transform: none;
+        }
+        
+        .seccion-modal {
+            margin-bottom: 25px;
+        }
+        
+        .titulo-seccion {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #533483;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .galeria-avatares {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .avatar-opcion {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .avatar-opcion:hover {
+            border-color: #533483;
+            transform: scale(1.1);
+        }
+        
+        .avatar-opcion.seleccionado {
+            border-color: #533483;
+            box-shadow: 0 0 15px rgba(83, 52, 131, 0.5);
+        }
+        
+        .avatar-opcion::after {
+            content: '✓';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: #533483;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .avatar-opcion.seleccionado::after {
+            opacity: 1;
+        }
+        
+        .upload-area {
+            border: 2px dashed #533483;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .upload-area:hover {
+            border-color: #7b2cbf;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #7b2cbf;
+            background: #e8eaff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #533483;
+        }
+        
+        .botones-modal {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .boton-modal {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .boton-cancelar {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .boton-cancelar:hover {
+            background: #5a6268;
+        }
+        
+        .boton-guardar {
+            background: #533483;
+            color: white;
+        }
+        
+        .boton-guardar:hover {
+            background: #7b2cbf;
+        }
+        
+        .boton-guardar:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
+    <!-- Modal de cambio de avatar -->
+    <div id="modalAvatar" class="modal-avatar">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2 class="modal-title">🖼️ Cambiar Avatar</h2>
+                <button class="cerrar-modal" onclick="cerrarModalAvatar()">&times;</button>
+            </div>
+            
+            <div class="seccion-modal">
+                <h3 class="titulo-seccion">
+                    📁 Seleccionar de la galería
+                </h3>
+                <div class="galeria-avatares" id="galeriaAvatares">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+            
+            <div class="seccion-modal">
+                <h3 class="titulo-seccion">
+                    📤 Subir imagen personalizada
+                </h3>
+                <div class="upload-area" 
+                     onclick="document.getElementById('fileInput').click()"
+                     ondrop="manejarDrop(event)" 
+                     ondragover="manejarDragOver(event)"
+                     ondragenter="manejarDragEnter(event)"
+                     ondragleave="manejarDragLeave(event)">
+                    <div class="upload-icon">📷</div>
+                    <p><strong>Haz clic aquí o arrastra una imagen</strong></p>
+                    <p>Formatos soportados: JPG, PNG, GIF (máx. 5MB)</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="manejarArchivoSeleccionado(event)">
+                </div>
+                <div id="vistaPrevia" style="display: none; margin-top: 15px;">
+                    <p><strong>Vista previa:</strong></p>
+                    <img id="imagenPrevia" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #533483;">
+                </div>
+            </div>
+            
+            <div class="botones-modal">
+                <button class="boton-modal boton-cancelar" onclick="cerrarModalAvatar()">
+                    Cancelar
+                </button>
+                <button class="boton-modal boton-guardar" id="botonGuardar" onclick="guardarAvatar()" disabled>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- Navbar -->
     <nav class="barra-navegacion">
         <div class="contenedor-nav">
@@ -64,7 +364,7 @@
             </div>
             
             <div class="usuario-nav">
-                <button class="boton-cerrar-sesion" onclick="logoutWithSecurity()">
+                <button class="boton-cerrar-sesion" onclick="cerrarSesion()">
                     Cerrar Sesión
                 </button>
             </div>
@@ -76,25 +376,182 @@
         <div class="contenedor perfil-contenedor">
             <div class="cabecera-perfil">
                 <div class="contenedor-avatar">
-                    <div class="circulo-avatar">
-                        <img src="../img/default-avatar.jpg" alt="Avatar del usuario" class="imagen-avatar">
+                    <div class="circulo-avatar" onclick="abrirModalAvatar()" style="cursor: pointer;" title="Haz clic para cambiar tu avatar">
+                        <?php
+                        // Ruta a la carpeta de imágenes
+                        $ruta_avatar = "../img/" . $usuario_avatar;
+                        
+                        // Debug: mostrar información en comentarios HTML
+                        echo "<!-- Debug Avatar: Usuario ID: $usuario_id, Avatar: $usuario_avatar, Ruta: $ruta_avatar, Existe: " . (file_exists($ruta_avatar) ? 'SI' : 'NO') . " -->";
+                        
+                        // Verificar si el archivo de avatar existe
+                        if (file_exists($ruta_avatar)) {
+                            // Mostrar imagen del avatar desde la base de datos
+                            ?>
+                            <div class="avatar-imagen" style="
+                                width: 100%;
+                                height: 100%;
+                                border-radius: 50%;
+                                background-image: url('<?php echo $ruta_avatar; ?>');
+                                background-size: cover;
+                                background-position: center;
+                                background-repeat: no-repeat;
+                                position: relative;
+                                overflow: hidden;
+                                border: 3px solid rgba(255,255,255,0.2);
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                                transition: all 0.3s ease;
+                            ">
+                                <!-- Efecto de overlay sutil -->
+                                <div style="
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    background: linear-gradient(135deg, rgba(0,0,0,0.1), transparent);
+                                    border-radius: 50%;
+                                "></div>
+                                
+                                <!-- Icono de edición que aparece al hover -->
+                                <div class="icono-editar-avatar" style="
+                                    position: absolute;
+                                    bottom: 5px;
+                                    right: 5px;
+                                    width: 25px;
+                                    height: 25px;
+                                    background: rgba(0,0,0,0.7);
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: white;
+                                    font-size: 12px;
+                                    opacity: 0;
+                                    transition: opacity 0.3s ease;
+                                ">
+                                    ✏️
+                                </div>
+                            </div>
+                            <?php
+                        } else {
+                            // Fallback: mostrar iniciales si no existe la imagen
+                            $iniciales = '';
+                            $palabras = explode(' ', $usuario_nombre);
+                            foreach($palabras as $palabra) {
+                                if (!empty($palabra)) {
+                                    $iniciales .= strtoupper(substr($palabra, 0, 1));
+                                }
+                            }
+                            $iniciales = substr($iniciales, 0, 2); // Máximo 2 iniciales
+                            
+                            // Colores de fondo basados en la primera letra
+                            $colores = [
+                                'A' => '#FF6B6B', 'B' => '#4ECDC4', 'C' => '#45B7D1', 'D' => '#96CEB4',
+                                'E' => '#FECA57', 'F' => '#FF9FF3', 'G' => '#54A0FF', 'H' => '#5F27CD',
+                                'I' => '#00D2D3', 'J' => '#FF9F43', 'K' => '#10AC84', 'L' => '#EE5A24',
+                                'M' => '#0984E3', 'N' => '#6C5CE7', 'O' => '#A29BFE', 'P' => '#FD79A8',
+                                'Q' => '#E17055', 'R' => '#00B894', 'S' => '#00CEC9', 'T' => '#6C5CE7',
+                                'U' => '#A29BFE', 'V' => '#FD79A8', 'W' => '#FDCB6E', 'X' => '#E84393',
+                                'Y' => '#2D3436', 'Z' => '#636E72'
+                            ];
+                            
+                            $primera_letra = substr($iniciales, 0, 1);
+                            $color_fondo = isset($colores[$primera_letra]) ? $colores[$primera_letra] : '#74B9FF';
+                            ?>
+                            
+                            <!-- Avatar con iniciales (fallback) -->
+                            <div class="avatar-iniciales" style="
+                                background: linear-gradient(135deg, <?php echo $color_fondo; ?>, <?php echo $color_fondo; ?>cc);
+                                width: 100%;
+                                height: 100%;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                                font-weight: bold;
+                                font-size: 24px;
+                                text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                                position: relative;
+                                overflow: hidden;
+                            ">
+                                <!-- Efecto de brillo -->
+                                <div style="
+                                    position: absolute;
+                                    top: 10%;
+                                    left: 10%;
+                                    width: 30%;
+                                    height: 30%;
+                                    background: rgba(255,255,255,0.3);
+                                    border-radius: 50%;
+                                    filter: blur(8px);
+                                "></div>
+                                
+                                <!-- Iniciales del usuario -->
+                                <span style="position: relative; z-index: 2;">
+                                    <?php echo $iniciales; ?>
+                                </span>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                        
+                        <!-- Indicador de nivel en la esquina -->
+                        <div class="indicador-nivel" style="
+                            position: absolute;
+                            bottom: 0;
+                            right: 0;
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            background: <?php 
+                                switch($usuario_nivel) {
+                                    case 'Principiante': echo '#4CAF50'; break;
+                                    case 'Novato': echo '#FF9800'; break;
+                                    case 'Experto': echo '#F44336'; break;
+                                    default: echo '#9E9E9E';
+                                }
+                            ?>;
+                            border: 3px solid white;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                        ">
+                            <?php 
+                                switch($usuario_nivel) {
+                                    case 'Principiante': echo '🌱'; break;
+                                    case 'Novato': echo '⚡'; break;
+                                    case 'Experto': echo '🔥'; break;
+                                    default: echo '❓';
+                                }
+                            ?>
+                        </div>
                     </div>
                     <div class="barra-nivel">
-                        <div class="progreso-nivel" style="--progress: 65%"></div>
+                        <div class="progreso-nivel" style="--progress: <?php 
+                            // Calcular progreso basado en monedas
+                            $progreso = min(($usuario_monedas / 1000) * 100, 100);
+                            echo $progreso;
+                        ?>%"></div>
                     </div>
                 </div>
                 
                 <div class="info-usuario">
-                    <h2 class="nombre-usuario" id="username-display">-- --</h2>
-                    <p class="nivel-usuario">Nivel: --</p>
+                    <h2 class="nombre-usuario" id="username-display"><?php echo htmlspecialchars($usuario_nombre); ?></h2>
+                    <p class="nivel-usuario">Nivel: <?php echo htmlspecialchars($usuario_nivel); ?></p>
                 </div>
             </div>
             
             <div class="cuadricula-estadisticas">
                 <div class="tarjeta-estadistica">
-                    <div class="icono-estadistica">🎮</div>
-                    <div class="numero-estadistica">--</div>
-                    <div class="etiqueta-estadistica">Partidas Totales</div>
+                    <div class="icono-estadistica">💰</div>
+                    <div class="numero-estadistica"><?php echo number_format($usuario_monedas); ?></div>
+                    <div class="etiqueta-estadistica">Monedas Totales</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
@@ -111,7 +568,24 @@
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">⭐</div>
-                    <div class="numero-estadistica">--</div>
+                    <div class="numero-estadistica"><?php 
+                        // Mostrar número del nivel basado en la categoría
+                        $nivel_numero = '';
+                        switch($usuario_nivel) {
+                            case 'Principiante':
+                                $nivel_numero = '1';
+                                break;
+                            case 'Novato':
+                                $nivel_numero = '2';
+                                break;
+                            case 'Experto':
+                                $nivel_numero = '3';
+                                break;
+                            default:
+                                $nivel_numero = '-';
+                        }
+                        echo $nivel_numero;
+                    ?></div>
                     <div class="etiqueta-estadistica">Nivel</div>
                 </div>
             </div>
@@ -164,10 +638,15 @@
         // Esperar a que la página se cargue completamente
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📄 DOM cargado completamente');
+            console.log('👤 Usuario logueado: <?php echo addslashes($usuario_nombre); ?>');
+            console.log('🎯 Nivel: <?php echo addslashes($usuario_nivel); ?>');
+            console.log('💰 Monedas: <?php echo $usuario_monedas; ?>');
             
             // Verificar si las funciones de ventanas.js están disponibles
             if (typeof verificarSesion === 'function') {
-                verificarSesion();
+                // No es necesario verificar sesión, ya se carga desde PHP
+                // verificarSesion();
+                console.log('✅ Sesión verificada desde PHP');
             } else {
                 console.warn('⚠️ verificarSesion no está disponible');
             }
@@ -851,6 +1330,265 @@ Generado automáticamente por ReichMind
             window.URL.revokeObjectURL(url);
             
             alert('📊 Estadísticas descargadas correctamente');
+        }
+
+        // Variables globales para el cambio de avatar
+        let avatarSeleccionado = null;
+        let archivoSeleccionado = null;
+        let tipoSeleccion = null; // 'galeria' o 'archivo'
+
+        // Función para abrir el modal de avatar
+        function abrirModalAvatar() {
+            console.log('🖼️ Abriendo modal de avatar...');
+            const modal = document.getElementById('modalAvatar');
+            modal.style.display = 'block';
+            
+            // Cargar imágenes de la galería
+            cargarGaleriaAvatares();
+            
+            // Resetear selecciones
+            avatarSeleccionado = null;
+            archivoSeleccionado = null;
+            tipoSeleccion = null;
+            document.getElementById('botonGuardar').disabled = true;
+            
+            // Limpiar vista previa
+            const vistaPrevia = document.getElementById('vistaPrevia');
+            vistaPrevia.style.display = 'none';
+        }
+
+        // Función para cerrar el modal de avatar
+        function cerrarModalAvatar() {
+            const modal = document.getElementById('modalAvatar');
+            modal.style.display = 'none';
+            
+            // Limpiar selecciones
+            avatarSeleccionado = null;
+            archivoSeleccionado = null;
+            tipoSeleccion = null;
+            
+            // Limpiar vista previa
+            const vistaPrevia = document.getElementById('vistaPrevia');
+            vistaPrevia.style.display = 'none';
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = '';
+        }
+
+        // Función para cargar la galería de avatares desde la base de datos
+        function cargarGaleriaAvatares() {
+            fetch('cargarImagenes.php')
+                .then(response => response.json())
+                .then(data => {
+                    const galeria = document.getElementById('galeriaAvatares');
+                    
+                    if (data.status === 'success') {
+                        let galeriaHTML = '';
+                        data.data.forEach(imagen => {
+                            const activo = imagen.nombre_archivo === '<?php echo $usuario_avatar; ?>' ? 'seleccionado' : '';
+                            galeriaHTML += `
+                                <div class="avatar-opcion ${activo}" 
+                                     style="background-image: url('../img/${imagen.nombre_archivo}')"
+                                     onclick="seleccionarAvatarGaleria('${imagen.nombre_archivo}')"
+                                     title="${imagen.nombre_display}">
+                                </div>
+                            `;
+                        });
+                        galeria.innerHTML = galeriaHTML;
+                    } else {
+                        galeria.innerHTML = '<p>No se pudieron cargar las imágenes de la galería</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error cargando galería:', error);
+                    document.getElementById('galeriaAvatares').innerHTML = '<p>Error al cargar la galería</p>';
+                });
+        }
+
+        // Función para seleccionar un avatar de la galería
+        function seleccionarAvatarGaleria(nombreArchivo) {
+            console.log('🖼️ Avatar seleccionado de galería:', nombreArchivo);
+            
+            // Remover selección anterior
+            document.querySelectorAll('.avatar-opcion').forEach(el => {
+                el.classList.remove('seleccionado');
+            });
+            
+            // Seleccionar nuevo avatar
+            event.target.classList.add('seleccionado');
+            
+            // Actualizar variables globales
+            avatarSeleccionado = nombreArchivo;
+            tipoSeleccion = 'galeria';
+            archivoSeleccionado = null;
+            
+            // Ocultar vista previa de archivo
+            document.getElementById('vistaPrevia').style.display = 'none';
+            
+            // Habilitar botón guardar
+            document.getElementById('botonGuardar').disabled = false;
+        }
+
+        // Función para manejar archivo seleccionado
+        function manejarArchivoSeleccionado(event) {
+            const archivo = event.target.files[0];
+            procesarArchivo(archivo);
+        }
+
+        // Funciones para drag and drop
+        function manejarDragOver(event) {
+            event.preventDefault();
+        }
+
+        function manejarDragEnter(event) {
+            event.preventDefault();
+            event.target.closest('.upload-area').classList.add('dragover');
+        }
+
+        function manejarDragLeave(event) {
+            event.preventDefault();
+            event.target.closest('.upload-area').classList.remove('dragover');
+        }
+
+        function manejarDrop(event) {
+            event.preventDefault();
+            event.target.closest('.upload-area').classList.remove('dragover');
+            
+            const archivos = event.dataTransfer.files;
+            if (archivos.length > 0) {
+                procesarArchivo(archivos[0]);
+            }
+        }
+
+        // Función común para procesar archivos
+        function procesarArchivo(archivo) {
+            if (!archivo) return;
+            
+            // Validar tipo de archivo
+            const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!tiposPermitidos.includes(archivo.type)) {
+                alert('❌ Tipo de archivo no soportado. Use JPG, PNG o GIF.');
+                return;
+            }
+            
+            // Validar tamaño (5MB máximo)
+            if (archivo.size > 5 * 1024 * 1024) {
+                alert('❌ El archivo es muy grande. Máximo 5MB permitido.');
+                return;
+            }
+            
+            console.log('📁 Archivo seleccionado:', archivo.name);
+            
+            // Mostrar vista previa
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imagenPrevia = document.getElementById('imagenPrevia');
+                imagenPrevia.src = e.target.result;
+                document.getElementById('vistaPrevia').style.display = 'block';
+            };
+            reader.readAsDataURL(archivo);
+            
+            // Actualizar variables globales
+            archivoSeleccionado = archivo;
+            tipoSeleccion = 'archivo';
+            avatarSeleccionado = null;
+            
+            // Remover selección de galería
+            document.querySelectorAll('.avatar-opcion').forEach(el => {
+                el.classList.remove('seleccionado');
+            });
+            
+            // Habilitar botón guardar
+            document.getElementById('botonGuardar').disabled = false;
+        }
+
+        // Función para guardar el avatar seleccionado
+        function guardarAvatar() {
+            if (!avatarSeleccionado && !archivoSeleccionado) {
+                alert('❌ Selecciona un avatar primero');
+                return;
+            }
+            
+            console.log('💾 Guardando avatar...', { tipo: tipoSeleccion, avatar: avatarSeleccionado });
+            
+            const formData = new FormData();
+            
+            if (tipoSeleccion === 'galeria') {
+                // Guardar avatar de galería
+                formData.append('tipo', 'galeria');
+                formData.append('avatar', avatarSeleccionado);
+                formData.append('usuario_id', '<?php echo $usuario_id; ?>');
+                
+                enviarCambioAvatar(formData);
+                
+            } else if (tipoSeleccion === 'archivo') {
+                // Subir archivo personalizado
+                formData.append('tipo', 'archivo');
+                formData.append('usuario_id', '<?php echo $usuario_id; ?>');
+                formData.append('archivo_avatar', archivoSeleccionado);
+                
+                enviarCambioAvatar(formData);
+            }
+        }
+
+        // Función para enviar el cambio de avatar al servidor
+        function enviarCambioAvatar(formData) {
+            // Deshabilitar botón durante el proceso
+            const botonGuardar = document.getElementById('botonGuardar');
+            botonGuardar.disabled = true;
+            botonGuardar.textContent = 'Guardando...';
+            
+            fetch('cambiarAvatar.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('✅ Avatar actualizado correctamente');
+                    
+                    // Recargar la página para mostrar el nuevo avatar
+                    window.location.reload();
+                    
+                } else {
+                    alert('❌ Error al actualizar avatar: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al actualizar avatar');
+            })
+            .finally(() => {
+                // Restaurar botón
+                botonGuardar.disabled = false;
+                botonGuardar.textContent = 'Guardar Cambios';
+            });
+        }
+
+        // Cerrar modal al hacer clic fuera de él
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalAvatar');
+            if (event.target === modal) {
+                cerrarModalAvatar();
+            }
+        }
+
+        // Función para cerrar sesión
+        function cerrarSesion() {
+            // Mostrar confirmación
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                // Limpiar variables del juego si están activas
+                if (temporizadorIntervalo) {
+                    detenerTemporizador();
+                }
+                
+                // Limpiar localStorage si existe
+                if (typeof(Storage) !== "undefined") {
+                    localStorage.clear();
+                }
+                
+                // Redirigir a página de logout que destruye la sesión
+                window.location.href = 'logout.php';
+            }
         }
     </script>
 </body>
