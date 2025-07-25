@@ -1,3 +1,4 @@
+       
         
 <?php
 include_once 'conexion.php';
@@ -61,7 +62,7 @@ include_once 'conexion.php';
         }
         
         //Método para actualizar colaborador
-        public function actualizarColaborador($id, $email, $nombre, $password = null) {
+        public function actualizarColaborador($id, $nombre, $email, $password = null) {
             try {
                 if ($password !== null && $password !== '') {
                     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
@@ -71,8 +72,8 @@ include_once 'conexion.php';
                     $query = $this->pdo->prepare("UPDATE colaboradores SET email = :email, nombre = :nombre WHERE id = :id");
                 }
                 
-                $query->bindParam(":email", $email);
                 $query->bindParam(":nombre", $nombre);
+                $query->bindParam(":email", $email);
                 $query->bindParam(":id", $id);
                 return $query->execute();
             } catch (PDOException $e) {
@@ -330,6 +331,45 @@ include_once 'conexion.php';
                 $query = $this->pdo->prepare("UPDATE administradores SET horas_totales = horas_totales + :segundos WHERE id = :id");
                 $query->bindParam(":segundos", $segundos, PDO::PARAM_INT);
                 $query->bindParam(":id", $id);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+
+         // MÉTODOS PARA PREGUNTAS
+        public function obtenerPreguntaPorId($id_pregunta) {
+            try {
+                $query = $this->pdo->prepare("SELECT * FROM preguntas WHERE id_pregunta = :id");
+                $query->bindParam(":id", $id_pregunta);
+                $query->execute();
+                return $query->fetch(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        public function actualizarPregunta($id_pregunta, $texto_pregunta, $cod_categoria, $id_tema, $puntos) {
+            try {
+                $query = $this->pdo->prepare("UPDATE preguntas SET texto_pregunta = :texto, cod_categoria = :cat, id_tema = :tema, puntos = :puntos WHERE id_pregunta = :id");
+                $query->bindParam(":texto", $texto_pregunta);
+                $query->bindParam(":cat", $cod_categoria);
+                $query->bindParam(":tema", $id_tema);
+                $query->bindParam(":puntos", $puntos);
+                $query->bindParam(":id", $id_pregunta);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        public function eliminarPregunta($id_pregunta) {
+            try {
+                // Eliminar respuestas primero por FK
+                $this->pdo->prepare("DELETE FROM respuestas WHERE id_pregunta = :id")->execute([':id' => $id_pregunta]);
+                $query = $this->pdo->prepare("DELETE FROM preguntas WHERE id_pregunta = :id");
+                $query->bindParam(":id", $id_pregunta);
                 return $query->execute();
             } catch (PDOException $e) {
                 return false;

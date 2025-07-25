@@ -1,7 +1,7 @@
  <nav class="sidebar">
             <ul class="sidebar-menu">
                 <li>
-                    <a href="../administrativos/ventanaAdmin.php" >
+                    <a href="../colaboradores/ventanaColaborador.php" >
                         <span class="icon"><i class="fas fa-home"></i></span>
                         <span>Inicio</span>
                     </a>
@@ -25,13 +25,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="../adminColaboradores/indexColaborador.php">
-                        <span class="icon"><i class="fas fa-plus"></i></span>
-                        <span>Administrar Colaboradores</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../administrativos/configuracion.php">
+                    <a href="../colaboradores/configuracionColaboradores.php">
                         <span class="icon"><i class="fas fa-cog"></i></span>
                         <span>Configuración</span>
                     </a>

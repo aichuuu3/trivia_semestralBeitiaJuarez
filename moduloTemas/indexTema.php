@@ -26,50 +26,26 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
             <span>ReichMind</span>
         </div>
     </header>
-
+    <?php
+    session_start();
+    if (!isset($_SESSION['rol'])) {
+        exit;
+    }
+    ?>
     <div class="main-container">
         <!-- Sidebar -->
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="../administrativos/ventanaAdmin.php" >
-                        <span class="icon"><i class="fas fa-home"></i></span>
-                        <span>Inicio</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../moduloUsuarios/indexUsuario.php" >
-                        <span class="icon"><i class="fas fa-users"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../moduloTemas/indexTema.php" class="active">
-                        <span class="icon"><i class="fas fa-file-alt"></i></span>
-                        <span>Categorias</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../moduloPreguntas/indexPreguntas.php">
-                        <span class="icon"><i class="fas fa-question-circle"></i></span>
-                        <span>Preguntas</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../adminColaboradores/indexColaborador.php">
-                        <span class="icon"><i class="fas fa-plus"></i></span>
-                        <span>Administrar Colaboradores</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-cog"></i></span>
-                        <span>Configuración</span>
-                    </a>
-                </li>
-            </ul>
-        </nav> 
+        <?php
+        // Sidebar dinámico
+        if ($_SESSION['rol'] === 'admin') {
+            echo '<div class="sidebar">';
+            include '../sidebar/sb.php';
+            echo '</div>';
+        } elseif ($_SESSION['rol'] === 'colaborador') {
+            echo '<div class="sidebar">';
+            include '../sidebar/sbcolaborador.php';
+            echo '</div>';
+        }
+        ?>
 
         <!-- Main Content -->
         <main class="main-content">
