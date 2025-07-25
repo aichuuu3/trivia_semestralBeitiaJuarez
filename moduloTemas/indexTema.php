@@ -91,9 +91,12 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                         <form action="" method="post" id="frm">
                             <div class="form-group">
                                 <label for="">Categoría</label>
-                                <input type="text" name="Categoria" placeholder="Nombre categoría" required>
+                                <input type="text" name="Categoria" id="nombre_tema" placeholder="Nombre categoría" required>
                             </div>
-
+                            <div class="form-group">
+                                <label for="">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" class="form-control" placeholder="Descripción del tema" required></textarea>
+                            </div>
                             <div class="form-group">
                                 <input type="button" value="Registrar" id="registrar" class="btn btn-primary btn-block">
                             </div>
@@ -116,7 +119,8 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                     <thead class="thead-dark">
                         <tr>
                             <th>ID</th>
-                            <th>Categorías</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
                         </tr>
                     </thead>
                     <tbody id="resultado">
@@ -129,7 +133,7 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script src="../js/registroTemas.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     
     <!-- Script para el menú lateral -->

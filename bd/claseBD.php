@@ -1,3 +1,4 @@
+        
 <?php
 include_once 'conexion.php';
 //Clase DB para manejar operaciones de base de datos
@@ -202,6 +203,66 @@ include_once 'conexion.php';
                 return false;
             } catch (PDOException $e) {
                 return false;
+            }
+        }
+
+        // MÉTODOS PARA TEMAS
+        // Insertar tema
+        public function insertarTema($nombre_tema, $descripcion) {
+            try {
+                $query = $this->pdo->prepare("INSERT INTO temas (nombre_tema, descripcion) VALUES (:nombre_tema, :descripcion)");
+                $query->bindParam(":nombre_tema", $nombre_tema);
+                $query->bindParam(":descripcion", $descripcion);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Actualizar tema
+        public function actualizarTema($id_tema, $nombre_tema, $descripcion) {
+            try {
+                $query = $this->pdo->prepare("UPDATE temas SET nombre_tema = :nombre_tema, descripcion = :descripcion WHERE id_tema = :id_tema");
+                $query->bindParam(":nombre_tema", $nombre_tema);
+                $query->bindParam(":descripcion", $descripcion);
+                $query->bindParam(":id_tema", $id_tema);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Obtener tema por ID
+        public function obtenerTema($id_tema) {
+            try {
+                $query = $this->pdo->prepare("SELECT * FROM temas WHERE id_tema = :id_tema");
+                $query->bindParam(":id_tema", $id_tema);
+                $query->execute();
+                return $query->fetch(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Eliminar tema
+        public function eliminarTema($id_tema) {
+            try {
+                $query = $this->pdo->prepare("DELETE FROM temas WHERE id_tema = :id_tema");
+                $query->bindParam(":id_tema", $id_tema);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Listar todos los temas
+        public function listarTemas() {
+            try {
+                $query = $this->pdo->prepare("SELECT * FROM temas ORDER BY id_tema DESC");
+                $query->execute();
+                return $query->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                return [];
             }
         }
     }
