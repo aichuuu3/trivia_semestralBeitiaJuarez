@@ -623,6 +623,64 @@ try {
                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             }
         }
+        
+        @keyframes pulseUpdateNivel {
+            0% { 
+                transform: scale(1); 
+                background: rgba(255, 193, 7, 0.1);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            25% { 
+                transform: scale(1.05); 
+                background: rgba(255, 193, 7, 0.2);
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+            }
+            50% { 
+                transform: scale(1.15); 
+                background: rgba(255, 193, 7, 0.3);
+                box-shadow: 0 6px 24px rgba(255, 193, 7, 0.5);
+                font-weight: bold;
+            }
+            75% { 
+                transform: scale(1.05); 
+                background: rgba(255, 193, 7, 0.2);
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+            }
+            100% { 
+                transform: scale(1); 
+                background: transparent;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                font-weight: normal;
+            }
+        }
+        
+        @keyframes pulseAvatar {
+            0% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+            25% { 
+                transform: scale(1.1); 
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+            }
+            50% { 
+                transform: scale(1.2); 
+                box-shadow: 0 6px 24px rgba(255, 193, 7, 0.6);
+            }
+            75% { 
+                transform: scale(1.1); 
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+            }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+        }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+        }
     </style>
 </head>
 <body>
@@ -807,10 +865,6 @@ try {
         <div class="contenedor-nav">
             <div class="marca-nav">
                 <h1>🧠 ReichMind</h1>
-            </div>
-            
-            <div class="menu-nav">
-                <a href="#" class="enlace-nav activo">🏠 Inicio</a>
             </div>
             
             <div class="usuario-nav">
@@ -1000,25 +1054,25 @@ try {
             <div class="cuadricula-estadisticas">
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">💰</div>
-                    <div class="numero-estadistica"><?php echo number_format($usuario_monedas); ?></div>
+                    <div class="numero-estadistica" id="display-monedas"><?php echo number_format($usuario_monedas); ?></div>
                     <div class="etiqueta-estadistica">Monedas Totales</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">🏆</div>
-                    <div class="numero-estadistica"><?php echo number_format($usuario_partidas_ganadas); ?></div>
+                    <div class="numero-estadistica" id="display-partidas-ganadas"><?php echo number_format($usuario_partidas_ganadas); ?></div>
                     <div class="etiqueta-estadistica">Partidas Ganadas</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">❌</div>
-                    <div class="numero-estadistica"><?php echo number_format($usuario_partidas_fallidas); ?></div>
+                    <div class="numero-estadistica" id="display-partidas-fallidas"><?php echo number_format($usuario_partidas_fallidas); ?></div>
                     <div class="etiqueta-estadistica">Partidas Fallidas</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">⭐</div>
-                    <div class="numero-estadistica"><?php 
+                    <div class="numero-estadistica" id="display-nivel"><?php 
                         // Mostrar número del nivel basado en la categoría
                         $nivel_numero = '';
                         switch($usuario_nivel) {
@@ -1599,6 +1653,30 @@ try {
             botonRegresar.style.display = 'block';
         }
 
+        // funcion para regresar a la seleccion de temas
+        function regresarATemas(idCategoria, nombreCategoria) {
+            console.log(`Regresando a temas de ${nombreCategoria}...`);
+            
+            // Limpiar variables del juego
+            preguntasTrivia = [];
+            preguntaActual = 0;
+            puntosAcumulados = 0;
+            monedasGanadas = 0;
+            respuestasCorrectas = 0;
+            respuestaSeleccionada = null;
+            tiempoInicio = null;
+            tiempoInicioPregunta = null;
+            tiempoFinal = null;
+            
+            // Detener temporizador si está activo
+            if (temporizadorIntervalo) {
+                detenerTemporizador();
+            }
+            
+            // Llamar directamente a seleccionarCategoria para recrear la selección de temas
+            seleccionarCategoria(idCategoria, nombreCategoria);
+        }
+
         // funcion para seleccionar tema y comenzar trivia
         function seleccionarTema(idTema, nombreTema, idCategoria, nombreCategoria) {
             console.log(`Tema seleccionado: ${nombreTema} (ID: ${idTema}) en categoría ${nombreCategoria}`);
@@ -1686,7 +1764,7 @@ try {
         function cargarPreguntas(idTema, idCategoria, nombreTema, nombreCategoria) {
             console.log(`Cargando preguntas para tema: ${nombreTema}`);
             
-            // Mostrar pantalla de carga
+            // Limpiar el contenedor y mostrar pantalla de carga
             const contenedorCategorias = document.querySelector('.contenedor-categorias');
             contenedorCategorias.innerHTML = `
                 <h3 class="titulo-juego">🎮 ${nombreTema} - ${nombreCategoria}</h3>
@@ -1695,8 +1773,36 @@ try {
                     <p>Preparando preguntas...</p>
                 </div>
                 <div class="juego-trivia" style="display: none;">
-                    <!-- Contenido del juego se agregará aquí -->
+                    <div class="info-juego">
+                        <div class="contador-pregunta">
+                            Pregunta <span class="pregunta-actual">1</span> de <span class="total-preguntas">0</span>
+                        </div>
+                        <div class="temporizador">
+                            ⏱️ <span class="tiempo-transcurrido">00:00</span>
+                        </div>
+                        <div class="puntos-acumulados">
+                            Puntos: <span class="puntos">0</span>
+                        </div>
+                        <div class="monedas-ganadas">
+                            💰 <span class="monedas">0</span> monedas
+                        </div>
+                    </div>
+                    <div class="pregunta-contenedor">
+                        <h4 class="texto-pregunta"></h4>
+                        <div class="respuestas-contenedor"></div>
+                    </div>
+                    <div class="controles-juego">
+                        <button class="boton-siguiente" onclick="siguientePregunta()" style="display: none;">
+                            Siguiente Pregunta →
+                        </button>
+                        <button class="boton-terminar" onclick="terminarTrivia()" style="display: none;">
+                            Terminar Trivia
+                        </button>
+                    </div>
                 </div>
+                <button class="boton-regresar-tema" onclick="regresarATemas(${idCategoria}, '${nombreCategoria}')" style="display: none;">
+                    ← Regresar a Temas
+                </button>
             `;
             
             // Enviar petición al servidor
@@ -1710,10 +1816,15 @@ try {
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('📦 Respuesta del servidor:', data);
+                    
                     const loadingDiv = document.querySelector('.loading-preguntas');
                     const juegoDiv = document.querySelector('.juego-trivia');
+                    const botonRegresar = document.querySelector('.boton-regresar-tema');
                     
-                    if (data.status === 'success') {
+                    if (data.status === 'success' && data.data && data.data.length > 0) {
+                        console.log(`✅ Preguntas cargadas: ${data.data.length}`);
+                        
                         // Ocultar loading
                         loadingDiv.style.display = 'none';
                         
@@ -1725,34 +1836,58 @@ try {
                         respuestasCorrectas = 0;
                         tiempoInicio = null;
                         tiempoFinal = null;
+                        categoriaActual = nombreCategoria;
+                        
+                        console.log('🎮 Variables del juego inicializadas:', {
+                            totalPreguntas: preguntasTrivia.length,
+                            categoria: categoriaActual,
+                            preguntaActual: preguntaActual
+                        });
                         
                         // Actualizar contador total de preguntas
                         document.querySelector('.total-preguntas').textContent = preguntasTrivia.length;
                         
-                        // Mostrar juego y cargar primera pregunta
+                        // Mostrar juego y botón regresar
                         juegoDiv.style.display = 'block';
+                        botonRegresar.style.display = 'block';
+                        
+                        // Cargar y mostrar primera pregunta
                         mostrarPregunta();
                         
                     } else {
+                        console.error('❌ No hay preguntas disponibles');
                         loadingDiv.innerHTML = `
-                            <div class="error-loading">
-                                <h4>❌ Error al cargar preguntas</h4>
-                                <p>${data.message}</p>
-                                <button onclick="regresarPanelPrincipal()">Regresar</button>
+                            <div class="error-loading" style="text-align: center; padding: 30px;">
+                                <h4 style="color: #dc3545; margin-bottom: 15px;">❌ Sin Preguntas Disponibles</h4>
+                                <p style="margin-bottom: 20px;">${data.message || 'No se encontraron preguntas para este tema.'}</p>
+                                <button onclick="regresarATemas(${idCategoria}, '${nombreCategoria}')" 
+                                        style="background: #533483; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                    ← Regresar a Temas
+                                </button>
                             </div>
                         `;
+                        
+                        // Mostrar botón regresar
+                        botonRegresar.style.display = 'block';
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('❌ Error en cargarPreguntas:', error);
                     const loadingDiv = document.querySelector('.loading-preguntas');
                     loadingDiv.innerHTML = `
-                        <div class="error-loading">
-                            <h4>❌ Error de conexión</h4>
-                            <p>No se pudieron cargar las preguntas</p>
-                            <button onclick="regresarPanelPrincipal()">Regresar</button>
+                        <div class="error-loading" style="text-align: center; padding: 30px;">
+                            <h4 style="color: #dc3545; margin-bottom: 15px;">❌ Error de Conexión</h4>
+                            <p style="margin-bottom: 20px;">No se pudieron cargar las preguntas. Verifica tu conexión.</p>
+                            <button onclick="regresarATemas(${idCategoria}, '${nombreCategoria}')" 
+                                    style="background: #533483; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                ← Regresar a Temas
+                            </button>
                         </div>
                     `;
+                    
+                    // Mostrar botón regresar
+                    const botonRegresar = document.querySelector('.boton-regresar-tema');
+                    if (botonRegresar) botonRegresar.style.display = 'block';
                 });
         }
         
@@ -2405,13 +2540,24 @@ try {
             // Actualizar variable global de monedas
             monedasUsuarioActual = nuevasMonedas;
             
-            // Actualizar en el perfil si existe
-            const monedasElement = document.querySelector('.numero-estadistica');
-            if (monedasElement && monedasElement.parentElement.querySelector('.etiqueta-estadistica').textContent.includes('Monedas')) {
-                monedasElement.textContent = nuevasMonedas;
+            // Actualizar usando ID específico
+            const displayMonedas = document.getElementById('display-monedas');
+            if (displayMonedas) {
+                displayMonedas.textContent = number_format(nuevasMonedas);
+                
+                // Agregar efecto visual de actualización
+                displayMonedas.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                setTimeout(() => {
+                    displayMonedas.style.animation = '';
+                }, 600);
             }
             
             console.log(`💰 Monedas actualizadas en interfaz: ${nuevasMonedas}`);
+        }
+        
+        // Función auxiliar para formatear números (similar a PHP number_format)
+        function number_format(number) {
+            return new Intl.NumberFormat('es-ES').format(number);
         }
         
         // Función para actualizar el display de partidas ganadas en la interfaz
@@ -2419,20 +2565,17 @@ try {
             // Actualizar variable global de partidas ganadas
             partidasGanadasActual = nuevasPartidasGanadas;
             
-            // Buscar el elemento específico de partidas ganadas
-            const estadisticas = document.querySelectorAll('.numero-estadistica');
-            estadisticas.forEach(elemento => {
-                const etiqueta = elemento.parentElement.querySelector('.etiqueta-estadistica');
-                if (etiqueta && etiqueta.textContent.includes('Partidas Ganadas')) {
-                    elemento.textContent = nuevasPartidasGanadas;
-                    
-                    // Agregar efecto visual de actualización
-                    elemento.style.animation = 'pulseUpdate 0.6s ease-in-out';
-                    setTimeout(() => {
-                        elemento.style.animation = '';
-                    }, 600);
-                }
-            });
+            // Actualizar usando ID específico
+            const displayPartidasGanadas = document.getElementById('display-partidas-ganadas');
+            if (displayPartidasGanadas) {
+                displayPartidasGanadas.textContent = number_format(nuevasPartidasGanadas);
+                
+                // Agregar efecto visual de actualización
+                displayPartidasGanadas.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                setTimeout(() => {
+                    displayPartidasGanadas.style.animation = '';
+                }, 600);
+            }
             
             console.log(`🏆 Partidas ganadas actualizadas en interfaz: ${nuevasPartidasGanadas}`);
         }
@@ -2442,22 +2585,93 @@ try {
             // Actualizar variable global de partidas fallidas
             partidasFallidasActual = nuevasPartidasFallidas;
             
-            // Buscar el elemento específico de partidas fallidas
-            const estadisticas = document.querySelectorAll('.numero-estadistica');
-            estadisticas.forEach(elemento => {
-                const etiqueta = elemento.parentElement.querySelector('.etiqueta-estadistica');
-                if (etiqueta && etiqueta.textContent.includes('Partidas Fallidas')) {
-                    elemento.textContent = nuevasPartidasFallidas;
-                    
-                    // Agregar efecto visual de actualización (en rojo para fallidas)
-                    elemento.style.animation = 'pulseUpdateFallida 0.6s ease-in-out';
-                    setTimeout(() => {
-                        elemento.style.animation = '';
-                    }, 600);
-                }
-            });
+            // Actualizar usando ID específico
+            const displayPartidasFallidas = document.getElementById('display-partidas-fallidas');
+            if (displayPartidasFallidas) {
+                displayPartidasFallidas.textContent = number_format(nuevasPartidasFallidas);
+                
+                // Agregar efecto visual de actualización (en rojo para fallidas)
+                displayPartidasFallidas.style.animation = 'pulseUpdateFallida 0.6s ease-in-out';
+                setTimeout(() => {
+                    displayPartidasFallidas.style.animation = '';
+                }, 600);
+            }
             
             console.log(`❌ Partidas fallidas actualizadas en interfaz: ${nuevasPartidasFallidas}`);
+        }
+        
+        // Función para actualizar el display del nivel en la interfaz
+        function actualizarDisplayNivel(nuevoNivel) {
+            // Actualizar variable global del nivel
+            nivelUsuarioActual = nuevoNivel;
+            
+            // Convertir el nivel a número para mostrar
+            let nivelNumero = '';
+            let colorNivel = '';
+            let emojiNivel = '';
+            
+            switch(nuevoNivel) {
+                case 'Principiante':
+                    nivelNumero = '1';
+                    colorNivel = '#4CAF50';
+                    emojiNivel = '🌱';
+                    break;
+                case 'Novato':
+                    nivelNumero = '2';
+                    colorNivel = '#FF9800';
+                    emojiNivel = '⚡';
+                    break;
+                case 'Experto':
+                    nivelNumero = '3';
+                    colorNivel = '#F44336';
+                    emojiNivel = '🔥';
+                    break;
+                default:
+                    nivelNumero = '-';
+                    colorNivel = '#9E9E9E';
+                    emojiNivel = '❓';
+            }
+            
+            // Actualizar el número del nivel en las estadísticas
+            const displayNivel = document.getElementById('display-nivel');
+            if (displayNivel) {
+                displayNivel.textContent = nivelNumero;
+                
+                // Agregar efecto visual de actualización con color del nivel
+                displayNivel.style.animation = 'pulseUpdateNivel 0.8s ease-in-out';
+                displayNivel.style.color = colorNivel;
+                setTimeout(() => {
+                    displayNivel.style.animation = '';
+                    displayNivel.style.color = '';
+                }, 800);
+            }
+            
+            // Actualizar el texto del nivel en el perfil
+            const nivelUsuarioElement = document.querySelector('.nivel-usuario');
+            if (nivelUsuarioElement) {
+                nivelUsuarioElement.textContent = `Nivel: ${nuevoNivel}`;
+                
+                // Agregar efecto visual
+                nivelUsuarioElement.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                setTimeout(() => {
+                    nivelUsuarioElement.style.animation = '';
+                }, 600);
+            }
+            
+            // Actualizar el indicador de nivel en el avatar
+            const indicadorNivel = document.querySelector('.indicador-nivel');
+            if (indicadorNivel) {
+                indicadorNivel.style.background = colorNivel;
+                indicadorNivel.textContent = emojiNivel;
+                
+                // Agregar efecto visual de pulsación
+                indicadorNivel.style.animation = 'pulseAvatar 0.8s ease-in-out';
+                setTimeout(() => {
+                    indicadorNivel.style.animation = '';
+                }, 800);
+            }
+            
+            console.log(`⭐ Nivel actualizado en interfaz: ${nuevoNivel} (${nivelNumero})`);
         }
         
         // Función para mostrar resumen detallado de monedas ganadas
@@ -2567,34 +2781,8 @@ try {
         function actualizarInterfazNivel(nuevoNivel) {
             console.log('🔄 Actualizando interfaz para nuevo nivel:', nuevoNivel);
             
-            // Actualizar variable global del nivel
-            nivelUsuarioActual = nuevoNivel;
-            
-            // Actualizar el nivel mostrado en el perfil
-            const nivelUsuarioElement = document.querySelector('.nivel-usuario');
-            if (nivelUsuarioElement) {
-                nivelUsuarioElement.textContent = `Nivel: ${nuevoNivel}`;
-            }
-            
-            // Actualizar el número de nivel en las estadísticas
-            const numeroNivelElement = document.querySelector('.numero-estadistica');
-            if (numeroNivelElement && numeroNivelElement.parentElement.querySelector('.etiqueta-estadistica').textContent === 'Nivel') {
-                let numeroNivel = '';
-                switch(nuevoNivel) {
-                    case 'Principiante':
-                        numeroNivel = '1';
-                        break;
-                    case 'Novato':
-                        numeroNivel = '2';
-                        break;
-                    case 'Experto':
-                        numeroNivel = '3';
-                        break;
-                    default:
-                        numeroNivel = '-';
-                }
-                numeroNivelElement.textContent = numeroNivel;
-            }
+            // Usar la función específica para actualizar el display del nivel
+            actualizarDisplayNivel(nuevoNivel);
             
             // Mostrar una animación de celebración
             mostrarAnimacionSubidaNivel(nuevoNivel);
@@ -3070,6 +3258,140 @@ try {
                 // Redirigir a página de logout que destruye la sesión
                 window.location.href = 'logout.php';
             }
+        }
+        
+        // Función para iniciar el temporizador del juego
+        function iniciarTemporizador() {
+            console.log('⏱️ Iniciando temporizador...');
+            
+            const elemento = document.querySelector('.tiempo-transcurrido');
+            if (!elemento) {
+                console.warn('⚠️ Elemento del temporizador no encontrado');
+                return;
+            }
+            
+            temporizadorIntervalo = setInterval(() => {
+                if (tiempoInicio) {
+                    const tiempoActual = new Date();
+                    const diferencia = Math.floor((tiempoActual - tiempoInicio) / 1000);
+                    
+                    const minutos = Math.floor(diferencia / 60);
+                    const segundos = diferencia % 60;
+                    
+                    elemento.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+        
+        // Función para detener el temporizador
+        function detenerTemporizador() {
+            if (temporizadorIntervalo) {
+                clearInterval(temporizadorIntervalo);
+                temporizadorIntervalo = null;
+                console.log('⏱️ Temporizador detenido');
+            }
+        }
+        
+        // Función para ir a la siguiente pregunta
+        function siguientePregunta() {
+            console.log('➡️ Siguiente pregunta...');
+            
+            if (preguntaActual < preguntasTrivia.length - 1) {
+                preguntaActual++;
+                mostrarPregunta();
+            } else {
+                // Era la última pregunta, mostrar resultados
+                terminarTrivia();
+            }
+        }
+        
+        // Función para mostrar los resultados de la trivia
+        function mostrarResultadosTrivia(tiempoTotal, dataServidor) {
+            const contenedorCategorias = document.querySelector('.contenedor-categorias');
+            
+            const minutos = Math.floor(tiempoTotal / 60);
+            const segundos = tiempoTotal % 60;
+            const tiempoFormateado = `${minutos}:${segundos.toString().padStart(2, '0')}`;
+            
+            const porcentajeAciertos = Math.round((respuestasCorrectas / preguntasTrivia.length) * 100);
+            const esPartidaGanada = respuestasCorrectas === preguntasTrivia.length;
+            
+            let mensajeResultado = '';
+            let colorResultado = '';
+            let iconoResultado = '';
+            
+            if (esPartidaGanada) {
+                mensajeResultado = '¡Perfecto! 🎉';
+                colorResultado = '#28a745';
+                iconoResultado = '🏆';
+            } else if (porcentajeAciertos >= 70) {
+                mensajeResultado = '¡Muy bien! 👏';
+                colorResultado = '#ffc107';
+                iconoResultado = '⭐';
+            } else if (porcentajeAciertos >= 50) {
+                mensajeResultado = 'Puedes mejorar 💪';
+                colorResultado = '#17a2b8';
+                iconoResultado = '📚';
+            } else {
+                mensajeResultado = 'Sigue practicando 📖';
+                colorResultado = '#dc3545';
+                iconoResultado = '🎯';
+            }
+            
+            contenedorCategorias.innerHTML = `
+                <div class="resultados-trivia" style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">${iconoResultado}</div>
+                    <h2 style="color: ${colorResultado}; margin-bottom: 15px;">${mensajeResultado}</h2>
+                    <h3 style="margin-bottom: 30px;">Resultados de ${categoriaActual}</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin: 20px 0;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #28a745;">${respuestasCorrectas}</div>
+                                <div>Respuestas Correctas</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #17a2b8;">${porcentajeAciertos}%</div>
+                                <div>Porcentaje de Aciertos</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #ffc107;">${puntosAcumulados}</div>
+                                <div>Puntos Obtenidos</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #FFD700;">${monedasGanadas}</div>
+                                <div>Monedas Ganadas</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #6c757d;">${tiempoFormateado}</div>
+                                <div>Tiempo Total</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${dataServidor.status === 'success' ? 
+                        `<div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                            ✅ Resultados guardados correctamente
+                        </div>` : 
+                        `<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                            ❌ ${dataServidor.message || 'Error al guardar resultados'}
+                        </div>`
+                    }
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                        <button onclick="regresarPanelPrincipal()" style="
+                            background: #533483; color: white; border: none; padding: 12px 25px; 
+                            border-radius: 25px; cursor: pointer; font-weight: bold;">
+                            🏠 Ir al Panel Principal
+                        </button>
+                        <button onclick="iniciarNuevaPartida()" style="
+                            background: #28a745; color: white; border: none; padding: 12px 25px; 
+                            border-radius: 25px; cursor: pointer; font-weight: bold;">
+                            🎮 Nueva Partida
+                        </button>
+                    </div>
+                </div>
+            `;
         }
     </script>
 </body>
