@@ -1,0 +1,469 @@
+/* Estilos para el módulo de gestión de preguntas - ReichMind */
+
+/* Contenedor principal */
+.container-fluid {
+    padding: 0;
+}
+
+/* Título principal */
+.main-content h1 {
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Tarjeta de registro de preguntas */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    border: none;
+    padding: 1.5rem;
+}
+
+.card-header h3 {
+    color: white;
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.card-body {
+    padding: 2rem;
+    background: white;
+}
+
+/* Formulario */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: white;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #059669;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+.form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Campo de puntos readonly */
+.form-group input[readonly] {
+    background-color: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* Botón de añadir pregunta */
+.btn-primary,
+#registrar,
+input[type="button"] {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    border: none !important;
+    padding: 12px 0 !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white !important;
+    width: 100% !important;
+    display: block !important;
+    cursor: pointer !important;
+    margin-top: 10px;
+}
+
+.btn-primary:hover,
+#registrar:hover,
+input[type="button"]:hover {
+    background: linear-gradient(135deg, #047857, #0d9488) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3) !important;
+    color: white !important;
+}
+
+.btn-primary:focus,
+#registrar:focus,
+input[type="button"]:focus {
+    background: linear-gradient(135deg, #047857, #0d9488) !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3) !important;
+    color: white !important;
+    outline: none !important;
+}
+
+.btn-primary:active,
+#registrar:active,
+input[type="button"]:active {
+    background: linear-gradient(135deg, #065f46, #134e4a) !important;
+    transform: translateY(0);
+    color: white !important;
+}
+
+/* Sección de búsqueda */
+.col-lg-6.ml-auto {
+    margin-bottom: 1rem;
+}
+
+.col-lg-6.ml-auto .form-group {
+    margin-bottom: 0;
+}
+
+.col-lg-6.ml-auto label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.col-lg-6.ml-auto input {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.col-lg-6.ml-auto input:focus {
+    border-color: #059669;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+/* Tabla de preguntas */
+.table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #374151, #4b5563);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: center;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tbody td {
+    padding: 1rem;
+    border-color: #f3f4f6;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.table tbody tr:hover {
+    background-color: #f0fdf4;
+}
+
+/* Estilos para las respuestas en la tabla */
+.text-success {
+    color: #059669 !important;
+    font-weight: 600;
+}
+
+/* Badges para categorías */
+.badge-success {
+    background-color: #10b981 !important;
+}
+
+.badge-warning {
+    background-color: #f59e0b !important;
+}
+
+.badge-danger {
+    background-color: #ef4444 !important;
+}
+
+.badge-primary {
+    background-color: #3b82f6 !important;
+}
+
+/* Badges para temas */
+.badge-info {
+    background-color: #06b6d4 !important;
+}
+
+.badge-dark {
+    background-color: #374151 !important;
+    color: white !important;
+}
+
+.badge-secondary {
+    background-color: #6b7280 !important;
+}
+
+.badge-light {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+}
+
+/* Estilos generales para badges */
+.badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    margin: 2px;
+}
+
+/* Estados de las preguntas con iconos */
+.text-success i,
+.text-danger i {
+    margin-right: 5px;
+    font-size: 10px;
+}
+
+/* Ajustes para la nueva columna de tema */
+.table thead th:nth-child(4) {
+    min-width: 100px;
+}
+
+.table tbody td:nth-child(4) {
+    text-align: center;
+}
+
+/* Estilos específicos para las celdas */
+.pregunta-cell {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.respuestas-cell {
+    max-width: 200px;
+    font-size: 13px;
+}
+
+/* Hover effects para badges */
+.badge:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+/* Responsive adjustments para la nueva estructura */
+@media (max-width: 768px) {
+    .pregunta-cell {
+        max-width: 120px !important;
+    }
+    
+    .respuestas-cell {
+        max-width: 120px !important;
+    }
+    
+    .badge {
+        font-size: 10px;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .card-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .table {
+        font-size: 14px;
+    }
+    
+    .table thead th,
+    .table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .text-wrap {
+        max-width: 150px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content h1 {
+        font-size: 1.3rem;
+    }
+    
+    .table thead th,
+    .table tbody td {
+        padding: 0.5rem 0.25rem;
+        font-size: 12px;
+    }
+    
+    .btn-primary {
+        font-size: 14px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    .text-wrap {
+        max-width: 100px !important;
+    }
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.table {
+    animation: slideInUp 0.8s ease-out;
+}
+
+/* Estados de validación */
+.form-group input.is-valid,
+.form-group textarea.is-valid {
+    border-color: #10b981;
+}
+
+.form-group input.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #ef4444;
+}
+
+.form-group input.is-valid:focus,
+.form-group textarea.is-valid:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-group input.is-invalid:focus,
+.form-group textarea.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Estilos específicos para preguntas */
+.pregunta-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.respuestas-cell {
+    max-width: 250px;
+    font-size: 13px;
+}
+
+/* Estilo para el textarea de preguntas */
+.form-group textarea {
+    min-height: 80px;
+    font-family: inherit;
+}
+
+/* Mejoras visuales para iconos */
+.fas.fa-info-circle,
+.fas.fa-exclamation-triangle {
+    margin-right: 8px;
+}
+
+/* Animación para badges */
+@keyframes badgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Mejora de la tabla para mejor legibilidad */
+.table tbody tr:hover {
+    background-color: #f0fdf4 !important;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Estilo para celdas vacías o con datos faltantes */
+.table tbody td:empty::after {
+    content: "N/A";
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Separadores visuales para respuestas múltiples */
+.respuestas-cell {
+    line-height: 1.4;
+}
+
+/* Tooltip effect para preguntas truncadas */
+.pregunta-cell:hover {
+    cursor: help;
+    position: relative;
+}
+
+/* Indicadores de cantidad de respuestas */
+.respuestas-cell::before {
+    content: "Incorrectas: ";
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 11px;
+}

@@ -29,52 +29,7 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
 
     <div class="main-container">
         <!-- Sidebar -->
-        <nav class="sidebar">
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="../administrativos/ventanaAdmin.php">
-                        <span class="icon"><i class="fas fa-home"></i></span>
-                        <span>Inicio</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../moduloUsuarios/indexUsuario.php" class="active">
-                        <span class="icon"><i class="fas fa-users"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-file-alt"></i></span>
-                        <span>Categorias</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-file-alt"></i></span>
-                        <span>Preguntas</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-calendar"></i></span>
-                        <span>Mensajes y notificaciones</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-plus"></i></span>
-                        <span>Administrar Colaboradores</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-cog"></i></span>
-                        <span>Configuración</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <?php include '../sidebar/sb.php'; ?>
 
         <!-- Main Content -->
         <main class="main-content">
