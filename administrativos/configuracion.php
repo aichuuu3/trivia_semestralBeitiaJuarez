@@ -14,11 +14,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = $_POST['nombre_completo'] ?? null;
     $email = $_POST['email'] ?? null;
     $password = $_POST['password'] ?? null;
-    if ($nombre && $email) {
-        $db->actualizarAdministrador($admin_id, $nombre, $email, $password);
+    $avatar = $_POST['avatar'] ?? null;
+    $mensaje_error = '';
+    
+    // Manejar subida de nueva imagen
+    if (isset($_FILES['nueva_imagen']) && $_FILES['nueva_imagen']['error'] === UPLOAD_ERR_OK) {
+        $archivo = $_FILES['nueva_imagen'];
+        $nombre_original = $archivo['name'];
+        $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
+        $tamaño_bytes = $archivo['size'];
+        $tamaño_kb = round($tamaño_bytes / 1024);
+        
+        // Validar tipo de archivo
+        $extensiones_permitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($extension, $extensiones_permitidas)) {
+            $mensaje_error = 'Solo se permiten archivos de imagen (JPG, PNG, GIF, WEBP)';
+        } else if ($tamaño_bytes > 5 * 1024 * 1024) { // 5MB máximo
+            $mensaje_error = 'El archivo es demasiado grande. Máximo 5MB.';
+        } else {
+            // Generar nombre único para evitar conflictos
+            $nombre_archivo = 'avatar_admin_' . $admin_id . '_' . time() . '.' . $extension;
+            $ruta_destino = '../img/' . $nombre_archivo;
+            $ruta_completa = '../img/' . $nombre_archivo;
+            
+            // Mover archivo subido
+            if (move_uploaded_file($archivo['tmp_name'], $ruta_destino)) {
+                // Insertar en base de datos
+                $nombre_display = 'Avatar Personalizado';
+                if ($db->insertarImagen($nombre_archivo, $nombre_display, $ruta_completa, $extension, $tamaño_kb)) {
+                    // Actualizar avatar del administrador
+                    $db->actualizarAvatarAdministrador($admin_id, $nombre_archivo);
+                    $avatar = $nombre_archivo; // Para que se refleje inmediatamente
+                } else {
+                    $mensaje_error = 'Error al guardar la imagen en la base de datos';
+                    unlink($ruta_destino); // Eliminar archivo si falla BD
+                }
+            } else {
+                $mensaje_error = 'Error al subir el archivo';
+            }
+        }
     }
-    // Redirigir para evitar reenvío
-    header('Location: configuracion.php?tab=edit');
+    
+    if ($nombre && $email) {
+        $result = $db->actualizarAdministrador($admin_id, $nombre, $email, $password);
+        if ($result && $nombre) {
+            $_SESSION['admin_nombre'] = $nombre; // Actualizar sesión
+        }
+    }
+    
+    if ($avatar && !$mensaje_error) {
+        $result = $db->actualizarAvatarAdministrador($admin_id, $avatar);
+    }
+    
+    // Redirigir para evitar reenvío con mensaje de éxito o error
+    if ($mensaje_error) {
+        header('Location: configuracion.php?tab=edit&error=' . urlencode($mensaje_error));
+    } else {
+        header('Location: configuracion.php?tab=edit&updated=1');
+    }
     exit();
 }
 
@@ -35,6 +88,11 @@ if (!$admin) {
     die('Admin no encontrado');
 }
 
+// Obtener avatares disponibles
+$pdo = $db->getPdo();
+$stmt = $pdo->query("SELECT nombre_archivo, nombre_display FROM imagenes WHERE tipo_imagen = 'avatar' AND activa = 1");
+$avatares_disponibles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 $tab = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard';
 ?>
 <!DOCTYPE html>
@@ -48,8 +106,10 @@ $tab = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard';
     <script>
     // Script para cambiar pestañas sin recargar
     document.addEventListener('DOMContentLoaded', function() {
+        // Manejar clics en pestañas
         document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
                 const tabs = document.querySelectorAll('.tab');
                 tabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
@@ -57,7 +117,123 @@ $tab = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard';
                 window.location.search = '?tab=' + tabName;
             });
         });
+        
+        // Manejar envío del formulario para avatar
+        const form = document.getElementById('form-editar-admin');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Permitir que el formulario se envíe normalmente
+                // No prevenir el comportamiento por defecto
+            });
+        }
+        
+        // Mostrar mensaje de éxito si se actualizó
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('updated') === '1') {
+            // Crear notificación de éxito
+            const notification = document.createElement('div');
+            notification.innerHTML = '✅ Perfil actualizado correctamente';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                font-weight: 500;
+            `;
+            document.body.appendChild(notification);
+            
+            // Remover notificación después de 3 segundos
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+            
+            // Limpiar URL
+            const newUrl = window.location.pathname + '?tab=edit';
+            window.history.replaceState({}, '', newUrl);
+        }
+        
+        // Mostrar mensaje de error si existe
+        if (urlParams.get('error')) {
+            const notification = document.createElement('div');
+            notification.innerHTML = '❌ ' + decodeURIComponent(urlParams.get('error'));
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #dc3545;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                font-weight: 500;
+                max-width: 400px;
+            `;
+            document.body.appendChild(notification);
+            
+            // Remover notificación después de 5 segundos
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+            
+            // Limpiar URL
+            const newUrl = window.location.pathname + '?tab=edit';
+            window.history.replaceState({}, '', newUrl);
+        }
+        
+        // Manejar subida de archivo
+        const fileInput = document.getElementById('nueva_imagen');
+        const filePreview = document.getElementById('file-preview');
+        const btnSubir = document.getElementById('btn-subir');
+        
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validar tipo de archivo
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Solo se permiten archivos de imagen (JPG, PNG, GIF, WEBP)');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Validar tamaño (5MB máximo)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('El archivo es demasiado grande. Máximo 5MB.');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Mostrar preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        filePreview.innerHTML = `
+                            <div class="file-preview-item">
+                                <img src="${e.target.result}" alt="Preview" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-top: 8px;">
+                                <span style="margin-left: 10px; font-size: 0.9em;">${file.name}</span>
+                            </div>
+                        `;
+                        btnSubir.style.display = 'inline-block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    filePreview.innerHTML = '';
+                    btnSubir.style.display = 'none';
+                }
+            });
+        }
     });
+    
     // Sumar 1 segundo cada segundo y actualizar el contador en vivo
     setInterval(function() {
         fetch('configuracion.php?sumar_hora=1')
@@ -100,14 +276,21 @@ $tab = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard';
                 </div>
                 <div class="profile-card">
                     <div class="profile-img">
-                        <img src="../img/admin_default.png" alt="Foto de perfil" />
+                        <img src="../img/<?php echo htmlspecialchars($admin['avatar'] ?? 'avatar.png'); ?>" alt="Foto de perfil" />
+                        <?php if($tab=='edit'): ?>
+                            <div class="avatar-edit-overlay">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <h2 class="profile-name"><?php echo htmlspecialchars($admin['nombre']); ?></h2>
                     <div class="profile-username">Admin ID: <?php echo $admin['id']; ?>
                         <?php if($tab=='edit'): ?> <i class="fas fa-pen edit-icon"></i><?php endif; ?>
                     </div>
                     <div class="profile-info-list">
-                        <form id="form-editar-admin" method="post" action="">
+                        <?php if($tab=='edit'): ?>
+                        <form id="form-editar-admin" method="post" action="" enctype="multipart/form-data">
+                        <?php endif; ?>
                             <div class="profile-info-row">
                                 <span class="profile-info-label">Nombre</span>
                                 <span class="profile-info-value" id="nombre-value">
@@ -163,7 +346,46 @@ $tab = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard';
                                     </span>
                                 </span>
                             </div>
+                            <?php if($tab=='edit'): ?>
+                            <div class="profile-info-row">
+                                <span class="profile-info-label">Avatar</span>
+                                <span class="profile-info-value">
+                                    <div class="avatar-selection">
+                                        <?php foreach($avatares_disponibles as $avatar): ?>
+                                            <label class="avatar-option">
+                                                <input type="radio" name="avatar" value="<?php echo htmlspecialchars($avatar['nombre_archivo']); ?>" 
+                                                       <?php echo ($admin['avatar'] === $avatar['nombre_archivo']) ? 'checked' : ''; ?>>
+                                                <img src="../img/<?php echo htmlspecialchars($avatar['nombre_archivo']); ?>" 
+                                                     alt="<?php echo htmlspecialchars($avatar['nombre_display']); ?>"
+                                                     title="<?php echo htmlspecialchars($avatar['nombre_display']); ?>">
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </span>
+                                <button type="submit" name="guardar_avatar" class="edit-save-btn"><i class="fas fa-save"></i></button>
+                            </div>
+                            <div class="profile-info-row">
+                                <span class="profile-info-label">Subir nueva imagen</span>
+                                <span class="profile-info-value">
+                                    <div class="upload-section">
+                                        <input type="file" id="nueva_imagen" name="nueva_imagen" accept="image/*" style="display: none;">
+                                        <label for="nueva_imagen" class="upload-btn">
+                                            <i class="fas fa-upload"></i> Seleccionar imagen
+                                        </label>
+                                        <div class="upload-info">
+                                            <small>Formatos: JPG, PNG, GIF, WEBP. Máximo 5MB.</small>
+                                            <div id="file-preview"></div>
+                                        </div>
+                                    </div>
+                                </span>
+                                <button type="submit" name="subir_imagen" class="edit-save-btn" id="btn-subir" style="display: none;">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </button>
+                            </div>
+                            <?php endif; ?>
+                        <?php if($tab=='edit'): ?>
                         </form>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

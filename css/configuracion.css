@@ -319,3 +319,130 @@ body {
         font-size: 15px;
     }
 }
+
+/* ====== SELECCIÓN DE AVATARES ====== */
+.avatar-selection {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.avatar-option {
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+
+.avatar-option:hover {
+    border-color: #4f8cff;
+    transform: scale(1.05);
+}
+
+.avatar-option input[type="radio"] {
+    display: none;
+}
+
+.avatar-option input[type="radio"]:checked + img {
+    border: 2px solid #4f8cff;
+    box-shadow: 0 0 10px rgba(79, 140, 255, 0.3);
+}
+
+.avatar-option img {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    object-fit: cover;
+    transition: all 0.2s;
+}
+
+.avatar-edit-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none; /* Evita que bloquee la interacción */
+    border-radius: 50%;
+}
+
+.profile-img:hover .avatar-edit-overlay {
+    opacity: 1;
+}
+
+/* ====== SUBIDA DE IMÁGENES ====== */
+.upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #4f8cff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    text-decoration: none;
+    width: fit-content;
+}
+
+.upload-btn:hover {
+    background: #2563eb;
+}
+
+.upload-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.upload-info small {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.file-preview-item {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.file-preview-item img {
+    border: 1px solid #ddd;
+}
+
+.file-preview-item span {
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Asegurar que los elementos del formulario no se bloqueen */
+.profile-info-row {
+    position: relative;
+    z-index: 1;
+}
+
+.edit-save-btn {
+    position: relative;
+    z-index: 2;
+}

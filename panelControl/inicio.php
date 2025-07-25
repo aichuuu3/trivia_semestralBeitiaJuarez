@@ -20,11 +20,17 @@ $usuario_email = $_SESSION['usuario_email'] ?? '';
 // Obtener el avatar del usuario desde la base de datos
 $usuario_avatar = 'avatar.png'; // Valor por defecto
 try {
-    $stmt = $pdo->prepare("SELECT avatar, cod_categoria FROM usuarios WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT avatar, cod_categoria, monedas_totales FROM usuarios WHERE id = ?");
     $stmt->execute([$usuario_id]);
     $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($resultado && !empty($resultado['avatar'])) {
         $usuario_avatar = $resultado['avatar'];
+    }
+    
+    // Actualizar las monedas del usuario con los datos reales de la base de datos
+    if ($resultado && isset($resultado['monedas_totales'])) {
+        $usuario_monedas = (int)$resultado['monedas_totales'];
+        $_SESSION['usuario_monedas'] = $usuario_monedas; // Actualizar sesión
     }
     
     // Obtener el nivel actual del usuario desde la base de datos
@@ -469,6 +475,50 @@ try {
         .requisitos-lista li {
             margin: 8px 0;
             line-height: 1.4;
+        }
+        
+        /* Estilos para monedas ganadas */
+        .monedas-ganadas {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+            animation: coinGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes coinGlow {
+            0%, 100% { box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 4px 20px rgba(255, 215, 0, 0.6); }
+        }
+        
+        .info-juego {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .contador-pregunta, .temporizador, .puntos-acumulados, .monedas-ganadas {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .temporizador.activo {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
     </style>
 </head>
@@ -1073,6 +1123,23 @@ try {
         function regresarPanelPrincipal() {
             console.log('Regresando al panel principal...');
             
+            // Limpiar variables del juego
+            preguntasTrivia = [];
+            preguntaActual = 0;
+            puntosAcumulados = 0;
+            monedasGanadas = 0;
+            respuestasCorrectas = 0;
+            respuestaSeleccionada = null;
+            tiempoInicio = null;
+            tiempoInicioPregunta = null;
+            tiempoFinal = null;
+            categoriaActual = null;
+            
+            // Detener temporizador si está activo
+            if (temporizadorIntervalo) {
+                detenerTemporizador();
+            }
+            
             // Eliminar contenedor de categorías
             const contenedorCategorias = document.querySelector('.contenedor-categorias');
             if (contenedorCategorias) {
@@ -1084,9 +1151,9 @@ try {
             const contenedorListas = document.querySelector('.contenedor-listas');
             const seccionDescarga = document.querySelector('.seccion-descarga');
             
-            seccionPartida.style.display = 'block';
-            contenedorListas.style.display = 'flex';
-            seccionDescarga.style.display = 'block';
+            if (seccionPartida) seccionPartida.style.display = 'block';
+            if (contenedorListas) contenedorListas.style.display = 'flex';
+            if (seccionDescarga) seccionDescarga.style.display = 'block';
         }
 
         // Función para mostrar mensaje de categoría bloqueada
@@ -1341,6 +1408,9 @@ try {
                         <div class="puntos-acumulados">
                             Puntos: <span class="puntos">0</span>
                         </div>
+                        <div class="monedas-ganadas">
+                            💰 <span class="monedas">0</span> monedas
+                        </div>
                     </div>
                     <div class="pregunta-contenedor">
                         <h4 class="texto-pregunta"></h4>
@@ -1372,8 +1442,11 @@ try {
         let preguntasTrivia = [];
         let preguntaActual = 0;
         let puntosAcumulados = 0;
+        let monedasGanadas = 0; // Monedas ganadas en la trivia actual
+        let respuestasCorrectas = 0; // Contador de respuestas correctas
         let respuestaSeleccionada = null;
         let tiempoInicio = null;
+        let tiempoInicioPregunta = null; // Tiempo de inicio de la pregunta actual
         let tiempoFinal = null;
         let temporizadorIntervalo = null;
         let categoriaActual = null; // Para rastrear la categoría de la trivia actual
@@ -1402,6 +1475,8 @@ try {
                         preguntasTrivia = data.data;
                         preguntaActual = 0;
                         puntosAcumulados = 0;
+                        monedasGanadas = 0;
+                        respuestasCorrectas = 0;
                         tiempoInicio = null;
                         tiempoFinal = null;
                         
@@ -1444,9 +1519,13 @@ try {
                 console.log('⏱️ Temporizador iniciado:', tiempoInicio);
             }
             
+            // Registrar tiempo de inicio de esta pregunta específica
+            tiempoInicioPregunta = new Date();
+            
             // Actualizar contador de pregunta
             document.querySelector('.pregunta-actual').textContent = preguntaActual + 1;
             document.querySelector('.puntos').textContent = puntosAcumulados;
+            document.querySelector('.monedas').textContent = monedasGanadas;
             
             // Mostrar texto de la pregunta
             document.querySelector('.texto-pregunta').textContent = pregunta.texto_pregunta;
@@ -1470,12 +1549,46 @@ try {
             document.querySelector('.boton-terminar').style.display = 'none';
         }
 
+        // Función para calcular monedas ganadas por respuesta correcta
+        function calcularMonedasPorRespuesta(esCorrecta, tiempoRespuesta = null) {
+            if (!esCorrecta) return 0;
+            
+            let monedasBase = 8; // Base por respuesta correcta (reducido para balance)
+            
+            // Bonificación por velocidad de respuesta
+            if (tiempoRespuesta !== null) {
+                if (tiempoRespuesta < 10) {
+                    monedasBase += 7; // Muy rápido (menos de 10 segundos)
+                } else if (tiempoRespuesta < 20) {
+                    monedasBase += 4; // Rápido (menos de 20 segundos)
+                } else if (tiempoRespuesta < 30) {
+                    monedasBase += 2; // Normal (menos de 30 segundos)
+                }
+                // Sin bonificación si toma más de 30 segundos
+            }
+            
+            // Bonificación por categoría (multiplicador)
+            const bonificacionCategoria = {
+                'Principiante': 1.0,  // Sin bonificación extra
+                'Novato': 1.3,       // +30%
+                'Experto': 1.6       // +60%
+            };
+            
+            const multiplicador = bonificacionCategoria[categoriaActual] || 1.0;
+            
+            return Math.floor(monedasBase * multiplicador);
+        }
+
         // funcion para seleccionar una respuesta
         function seleccionarRespuesta(indiceRespuesta, esCorrecta) {
             if (respuestaSeleccionada !== null) return; // Ya se seleccionó una respuesta
             
             respuestaSeleccionada = indiceRespuesta;
             const botonesRespuesta = document.querySelectorAll('.boton-respuesta');
+            
+            // Calcular tiempo de respuesta para esta pregunta específica
+            const tiempoActual = new Date();
+            const tiempoRespuesta = tiempoInicioPregunta ? Math.floor((tiempoActual - tiempoInicioPregunta) / 1000) : 0;
             
             // Si es la última pregunta, detener el temporizador
             if (preguntaActual === preguntasTrivia.length - 1) {
@@ -1497,10 +1610,25 @@ try {
                 }
             });
             
-            // Actualizar puntos si es correcta
+            // Actualizar puntos y monedas si es correcta
             if (esCorrecta) {
+                respuestasCorrectas++;
                 puntosAcumulados += preguntasTrivia[preguntaActual].puntos;
+                
+                // Calcular monedas ganadas por esta respuesta
+                const monedasPorRespuesta = calcularMonedasPorRespuesta(esCorrecta, tiempoRespuesta);
+                monedasGanadas += monedasPorRespuesta;
+                
+                // Mostrar feedback visual de monedas ganadas
+                if (monedasPorRespuesta > 0) {
+                    mostrarFeedbackMonedas(monedasPorRespuesta, tiempoRespuesta < 15);
+                }
+                
+                // Actualizar displays
                 document.querySelector('.puntos').textContent = puntosAcumulados;
+                document.querySelector('.monedas').textContent = monedasGanadas;
+                
+                console.log(`💰 Monedas ganadas por respuesta: ${monedasPorRespuesta} (Tiempo: ${tiempoRespuesta}s)`);
             }
             
             // Mostrar botón para continuar
@@ -1509,6 +1637,77 @@ try {
             } else {
                 document.querySelector('.boton-terminar').style.display = 'inline-block';
             }
+        }
+
+        // Función para mostrar feedback visual de monedas ganadas
+        function mostrarFeedbackMonedas(cantidad, esRapida = false) {
+            const contenedorJuego = document.querySelector('.juego-trivia');
+            
+            // Crear elemento de feedback
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: ${esRapida ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'linear-gradient(45deg, #28a745, #20c997)'};
+                color: white;
+                padding: 12px 18px;
+                border-radius: 25px;
+                font-weight: bold;
+                font-size: 15px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                animation: feedbackAnimation 3s ease-in-out forwards;
+                z-index: 1000;
+                pointer-events: none;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            `;
+            
+            let texto = `💰 +${cantidad}`;
+            if (esRapida) {
+                texto += ' ⚡'; // Icono de velocidad
+            }
+            
+            feedback.innerHTML = texto;
+            
+            // Agregar estilos de animación si no existen
+            if (!document.getElementById('feedbackStyles')) {
+                const style = document.createElement('style');
+                style.id = 'feedbackStyles';
+                style.textContent = `
+                    @keyframes feedbackAnimation {
+                        0% { 
+                            opacity: 0; 
+                            transform: translateY(-10px) scale(0.8); 
+                        }
+                        15% { 
+                            opacity: 1; 
+                            transform: translateY(0) scale(1.2); 
+                        }
+                        25% { 
+                            transform: translateY(0) scale(1); 
+                        }
+                        85% { 
+                            opacity: 1; 
+                            transform: translateY(0) scale(1); 
+                        }
+                        100% { 
+                            opacity: 0; 
+                            transform: translateY(-30px) scale(0.6); 
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Agregar al contenedor y remover después de la animación
+            contenedorJuego.style.position = 'relative';
+            contenedorJuego.appendChild(feedback);
+            
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    feedback.remove();
+                }
+            }, 3000);
         }
 
         // funcion para avanzar a la siguiente pregunta
@@ -1573,6 +1772,10 @@ try {
             
             const porcentaje = ((puntosAcumulados / (preguntasTrivia.length * 10)) * 100).toFixed(1);
             
+            // Calcular bonificaciones finales
+            const bonificacionesFinales = calcularBonificacionesFinales(porcentaje, tiempoTotalSegundos, respuestasCorrectas);
+            const monedasTotales = monedasGanadas + bonificacionesFinales;
+            
             // Verificar si puede subir de nivel (solo si tiene 100% de aciertos)
             let resultadoNivel = { actualizado: false };
             if (porcentaje == 100 && categoriaActual) {
@@ -1580,10 +1783,21 @@ try {
                 resultadoNivel = await verificarActualizacionNivel(categoriaActual, porcentaje);
             }
             
+            // Enviar monedas al servidor para actualizar la base de datos
+            const resultadoMonedas = await actualizarMonedasUsuario(monedasTotales, categoriaActual, porcentaje, tiempoTotalSegundos);
+            
             let mensaje = `🎉 ¡Trivia Completada! 🎉\n\n`;
             mensaje += `📊 Puntuación: ${puntosAcumulados} / ${preguntasTrivia.length * 10} puntos\n`;
             mensaje += `📈 Porcentaje: ${porcentaje}%\n`;
-            mensaje += `⏱️ Tiempo total: ${tiempoFormateado}\n\n`;
+            mensaje += `⏱️ Tiempo total: ${tiempoFormateado}\n`;
+            mensaje += `💰 Monedas ganadas: ${monedasTotales}\n`;
+            
+            // Desglose de monedas si hay bonificaciones
+            if (bonificacionesFinales > 0) {
+                mensaje += `   └ Por respuestas: ${monedasGanadas}\n`;
+                mensaje += `   └ Bonificaciones: ${bonificacionesFinales}\n`;
+            }
+            mensaje += `\n`;
             
             // Agregar mensaje especial si subió de nivel
             if (resultadoNivel.actualizado) {
@@ -1611,6 +1825,18 @@ try {
                 }
             }
             
+            // Mostrar información sobre el estado de las monedas
+            if (resultadoMonedas.success) {
+                mensaje += `\n\n💰 Tus monedas totales: ${resultadoMonedas.monedas_nuevas}`;
+                
+                // Mostrar resumen detallado de monedas después del alert principal
+                setTimeout(() => {
+                    mostrarResumenMonedas(monedasGanadas, bonificacionesFinales, monedasTotales);
+                }, 500);
+            } else {
+                mensaje += `\n\n⚠️ Hubo un problema al actualizar las monedas: ${resultadoMonedas.message}`;
+            }
+            
             alert(mensaje);
             
             // Si el nivel fue actualizado, actualizar la interfaz
@@ -1618,11 +1844,183 @@ try {
                 actualizarInterfazNivel(resultadoNivel.nivelNuevo);
             }
             
+            // Actualizar display de monedas en la interfaz si fue exitoso
+            if (resultadoMonedas.success) {
+                actualizarDisplayMonedas(resultadoMonedas.monedas_nuevas);
+            }
+            
             // Agregar a las estadísticas con el tiempo real
             agregarPuntosTiempo(puntosAcumulados, tiempoFormateado);
+            agregarMoneda(monedasTotales);
             
             // Regresar al panel principal
             regresarPanelPrincipal();
+        }
+        
+        // Función para calcular bonificaciones finales
+        function calcularBonificacionesFinales(porcentaje, tiempoTotal, respuestasCorrectas) {
+            let bonificacion = 0;
+            
+            // Bonificación base por completar la trivia
+            if (respuestasCorrectas > 0) {
+                bonificacion += 5; // Bonificación base por participación
+            }
+            
+            // Bonificación por porcentaje de aciertos
+            if (porcentaje >= 100) {
+                bonificacion += 50; // Perfección total
+            } else if (porcentaje >= 90) {
+                bonificacion += 35; // Excelencia
+            } else if (porcentaje >= 80) {
+                bonificacion += 20; // Muy bueno
+            } else if (porcentaje >= 70) {
+                bonificacion += 10; // Bueno
+            } else if (porcentaje >= 60) {
+                bonificacion += 5;  // Aceptable
+            }
+            
+            // Bonificación por eficiencia en tiempo
+            const totalPreguntas = preguntasTrivia.length;
+            const tiempoPromedioPorPregunta = tiempoTotal / totalPreguntas;
+            
+            if (tiempoPromedioPorPregunta < 30 && porcentaje >= 70) {
+                bonificacion += 25; // Muy eficiente
+            } else if (tiempoPromedioPorPregunta < 60 && porcentaje >= 60) {
+                bonificacion += 15; // Eficiente
+            }
+            
+            // Bonificación por categoría de dificultad
+            const bonificacionDificultad = {
+                'Principiante': 5,   // Bonificación mínima
+                'Novato': 10,        // Bonificación media
+                'Experto': 20        // Bonificación alta
+            };
+            
+            bonificacion += bonificacionDificultad[categoriaActual] || 0;
+            
+            // Bonificación extra por racha de respuestas correctas consecutivas
+            if (respuestasCorrectas === totalPreguntas) {
+                bonificacion += 30; // Todas las respuestas correctas
+            } else if (respuestasCorrectas >= totalPreguntas * 0.8) {
+                bonificacion += 15; // Al menos 80% correctas
+            }
+            
+            return bonificacion;
+        }
+        
+        // Función para actualizar monedas del usuario en el servidor
+        async function actualizarMonedasUsuario(monedasGanadas, categoria, porcentaje, tiempoTotal) {
+            try {
+                const response = await fetch('actualizarMonedas.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        monedas_ganadas: monedasGanadas,
+                        categoria: categoria,
+                        porcentaje: parseFloat(porcentaje),
+                        tiempo_total: tiempoTotal
+                    })
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    console.log(`💰 Monedas actualizadas: +${monedasGanadas} (Total: ${resultado.monedas_nuevas})`);
+                }
+                
+                return resultado;
+            } catch (error) {
+                console.error('Error al actualizar monedas:', error);
+                return { success: false, message: 'Error de conexión' };
+            }
+        }
+        
+        // Función para actualizar el display de monedas en la interfaz
+        function actualizarDisplayMonedas(nuevasMonedas) {
+            // Actualizar en el perfil si existe
+            const monedasElement = document.querySelector('.numero-estadistica');
+            if (monedasElement && monedasElement.parentElement.querySelector('.etiqueta-estadistica').textContent.includes('Monedas')) {
+                monedasElement.textContent = nuevasMonedas;
+            }
+            
+            // También actualizar variable global de PHP simulada en JavaScript
+            console.log(`💰 Monedas actualizadas en interfaz: ${nuevasMonedas}`);
+        }
+        
+        // Función para mostrar resumen detallado de monedas ganadas
+        function mostrarResumenMonedas(monedasPorRespuestas, bonificaciones, total) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #533483, #7b2cbf);
+                    color: white;
+                    padding: 30px;
+                    border-radius: 20px;
+                    max-width: 500px;
+                    text-align: center;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+                    animation: slideIn 0.3s ease;
+                ">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                    <h2 style="color: #FFD700; margin-bottom: 20px;">¡Monedas Ganadas!</h2>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0;">
+                        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                            <span>💡 Respuestas correctas:</span>
+                            <span style="color: #FFD700; font-weight: bold;">${monedasPorRespuestas} monedas</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                            <span>🏆 Bonificaciones:</span>
+                            <span style="color: #FFD700; font-weight: bold;">${bonificaciones} monedas</span>
+                        </div>
+                        <hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;">
+                            <span>💰 Total:</span>
+                            <span style="color: #FFD700;">${total} monedas</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: linear-gradient(45deg, #FFD700, #FFA500);
+                        color: #333;
+                        border: none;
+                        padding: 12px 25px;
+                        border-radius: 25px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        font-size: 16px;
+                        margin-top: 15px;
+                        transition: transform 0.2s ease;
+                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        ¡Genial!
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Remover automáticamente después de 8 segundos
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 8000);
         }
         
         // Función para verificar si el usuario puede subir de nivel
