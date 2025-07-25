@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Botón - Inicio Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #533483 0%, #0f3460 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .boton-test {
+            background: rgba(255, 255, 255, 0.9);
+            color: #533483;
+            border: 2px solid rgba(83, 52, 131, 0.5);
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: block;
+        }
+        .boton-test:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .debug-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Botón - Diagnóstico</h1>
+    
+    <button class="boton-test" onclick="testSimple()">
+        🟢 Test Simple - Click
+    </button>
+    
+    <button class="boton-test" onclick="testComplejo()">
+        🔄 Test - Función Completa
+    </button>
+    
+    <div class="debug-panel" id="output">
+        <h3>📊 Resultados:</h3>
+        <p>Haz clic en un botón para ver el resultado...</p>
+    </div>
+
+    <script>
+        console.log('🚀 Script iniciado');
+        
+        function log(mensaje) {
+            const output = document.getElementById('output');
+            const tiempo = new Date().toLocaleTimeString();
+            output.innerHTML += `<p><strong>[${tiempo}]</strong> ${mensaje}</p>`;
+            console.log(mensaje);
+        }
+        
+        function testSimple() {
+            log('✅ Test simple ejecutado - El botón funciona');
+            alert('🎉 ¡El botón funciona correctamente!');
+        }
+        
+        function testComplejo() {
+            log('🔄 Iniciando test complejo...');
+            
+            try {
+                // Simular la función iniciarNuevaPartida
+                log('📋 Buscando elementos del DOM...');
+                
+                // Test de fetch
+                log('📡 Probando conexión con cargarCategorias.php...');
+                fetch('cargarCategorias.php')
+                    .then(response => {
+                        log(`📥 Respuesta: ${response.status} ${response.statusText}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        log(`📊 Datos: ${JSON.stringify(data)}`);
+                        log('✅ Test complejo completado exitosamente');
+                    })
+                    .catch(error => {
+                        log(`❌ Error en fetch: ${error.message}`);
+                    });
+                    
+            } catch (error) {
+                log(`❌ Error en test complejo: ${error.message}`);
+            }
+        }
+        
+        // Test automático al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            log('📄 Página cargada completamente');
+            log('✅ Event listeners funcionando');
+        });
+        
+        log('🚀 Script configurado correctamente');
+    </script>
+</body>
+</html>
