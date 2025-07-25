@@ -130,6 +130,7 @@
                                                 <th>Respuesta Correcta</th>
                                                 <th>Respuestas Incorrectas</th>
                                                 <th>Estado</th>
+                                                <th>Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody id="resultado">
@@ -175,13 +176,18 @@
                                                         echo "<td><strong class='text-success'>" . htmlspecialchars($pregunta['respuesta_correcta']) . "</strong></td>";
                                                         echo "<td class='text-wrap respuestas-cell'>" . htmlspecialchars($pregunta['respuestas_incorrectas']) . "</td>";
                                                         echo "<td><span class='$estadoClass'><i class='fas fa-circle'></i> $estado</span></td>";
+                                                        echo "<td>";
+                                                        echo "<button class='btn btn-danger btn-sm' onclick='eliminarPregunta(" . $pregunta['id_pregunta'] . ")' title='Eliminar pregunta'>";
+                                                        echo "<i class='fas fa-trash'></i>";
+                                                        echo "</button>";
+                                                        echo "</td>";
                                                         echo "</tr>";
                                                     }
                                                 } else {
-                                                    echo "<tr><td colspan='7' class='text-center text-muted'><i class='fas fa-info-circle'></i> No hay preguntas registradas</td></tr>";
+                                                    echo "<tr><td colspan='8' class='text-center text-muted'><i class='fas fa-info-circle'></i> No hay preguntas registradas</td></tr>";
                                                 }
                                             } catch (Exception $e) {
-                                                echo "<tr><td colspan='7' class='text-center text-danger'><i class='fas fa-exclamation-triangle'></i> Error al cargar las preguntas: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+                                                echo "<tr><td colspan='8' class='text-center text-danger'><i class='fas fa-exclamation-triangle'></i> Error al cargar las preguntas: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
                                             }
                                             ?>
                                         </tbody>
@@ -265,6 +271,56 @@
                         document.getElementById('resultado').innerHTML = nuevoTbody.innerHTML;
                     }
                 });
+        }
+
+        // Función para eliminar preguntas
+        function eliminarPregunta(id_pregunta) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: 'Esta acción eliminará la pregunta y todas sus respuestas. ¡No se puede deshacer!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    formData.append('operacion', 'eliminar');
+                    formData.append('id_pregunta', id_pregunta);
+                    
+                    fetch('eliminarPregunta.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Eliminado!',
+                                text: data.message
+                            });
+                            recargarPreguntas();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error de conexión al eliminar la pregunta'
+                        });
+                    });
+                }
+            });
         }
     </script>
 </body>
