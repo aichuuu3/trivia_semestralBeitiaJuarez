@@ -434,6 +434,42 @@ try {
             box-shadow: 0 6px 20px rgba(83, 52, 131, 0.4);
         }
         
+        /* Estilos para el botón QR */
+        .boton-qr {
+            background: linear-gradient(135deg, #28a745, #20c997) !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 25px !important;
+            border-radius: 25px !important;
+            cursor: pointer !important;
+            font-weight: bold !important;
+            margin-left: 10px !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            font-size: 14px !important;
+        }
+        
+        .boton-qr:hover {
+            background: linear-gradient(135deg, #20c997, #28a745) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4) !important;
+        }
+        
+        /* Responsive para botones de descarga */
+        @media (max-width: 768px) {
+            .seccion-descarga {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            
+            .boton-qr {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+        }
+        
         /* Estilos para categorías bloqueadas */
         .boton-categoria-bloqueada {
             background: linear-gradient(135deg, #e9ecef, #dee2e6) !important;
@@ -663,6 +699,106 @@ try {
             <button class="boton-cerrar-bloqueo" onclick="cerrarModalBloqueo()">
                 Entendido
             </button>
+        </div>
+    </div>
+    
+    <!-- Modal de código QR -->
+    <div id="modalQR" class="modal-avatar" style="z-index: 1002;">
+        <div class="modal-contenido" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📱 Descarga Móvil</h2>
+                <button class="cerrar-modal" onclick="cerrarModalQR()">&times;</button>
+            </div>
+            
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📲</div>
+                <h3 style="color: #533483; margin-bottom: 15px;">Escanea con tu móvil</h3>
+                <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">
+                    Usa la cámara de tu teléfono o una app de códigos QR para descargar tus estadísticas
+                </p>
+                
+                <div id="loadingQRModal" style="display: block;">
+                    <div class="spinner" style="margin: 20px auto;"></div>
+                    <p>Generando código QR...</p>
+                </div>
+                
+                <div id="contenedorQRModal" style="display: none;">
+                    <div style="
+                        background: white;
+                        padding: 20px;
+                        border-radius: 15px;
+                        margin: 20px auto;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                        border: 3px solid #533483;
+                        max-width: 250px;
+                    ">
+                        <img id="imagenQRModal" src="" alt="Código QR" style="
+                            width: 100%;
+                            height: auto;
+                            border-radius: 10px;
+                        ">
+                    </div>
+                    
+                    <div style="
+                        background: #e8f5e8;
+                        padding: 15px;
+                        border-radius: 10px;
+                        margin: 15px 0;
+                        border-left: 5px solid #28a745;
+                        text-align: left;
+                        font-size: 14px;
+                    ">
+                        <strong style="color: #28a745;">📋 Pasos:</strong>
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                            <li>Abre la cámara de tu teléfono</li>
+                            <li>Apunta al código QR</li>
+                            <li>Toca la notificación que aparece</li>
+                            <li>El Excel se descargará automáticamente</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                    <button onclick="abrirDescargaDirecta()" style="
+                        background: linear-gradient(135deg, #533483, #7b2cbf);
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">
+                        📥 Descarga Directa
+                    </button>
+                    
+                    <button onclick="copiarURLDescarga()" style="
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">
+                        📋 Copiar URL
+                    </button>
+                    
+                    <button onclick="compartirWhatsAppModal()" style="
+                        background: #25d366;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">
+                        💬 WhatsApp
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -938,9 +1074,24 @@ try {
             </div>
 
             <!-- boton de descarga -->
-            <div class="seccion-descarga">
-                <button class="boton-descargar" onclick="descargarEstadisticas()">
-                    Descargar Estadísticas
+            <div class="seccion-descarga" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="boton-descargar" onclick="descargarEstadisticas()" style="
+                    background: linear-gradient(135deg, #533483, #7b2cbf);
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(83, 52, 131, 0.3);
+                    min-width: 200px;
+                ">
+                    📥 Descargar Excel
+                </button>
+                
+                <button class="boton-qr" onclick="abrirCodigoQR()" title="Generar código QR para descargar en móvil">
+                    📱 Código QR Móvil
                 </button>
             </div>
         </div>
@@ -1533,6 +1684,22 @@ try {
 
         // funcion para cargar preguntas del tema seleccionado
         function cargarPreguntas(idTema, idCategoria, nombreTema, nombreCategoria) {
+            console.log(`Cargando preguntas para tema: ${nombreTema}`);
+            
+            // Mostrar pantalla de carga
+            const contenedorCategorias = document.querySelector('.contenedor-categorias');
+            contenedorCategorias.innerHTML = `
+                <h3 class="titulo-juego">🎮 ${nombreTema} - ${nombreCategoria}</h3>
+                <div class="loading-preguntas">
+                    <div class="spinner"></div>
+                    <p>Preparando preguntas...</p>
+                </div>
+                <div class="juego-trivia" style="display: none;">
+                    <!-- Contenido del juego se agregará aquí -->
+                </div>
+            `;
+            
+            // Enviar petición al servidor
             const formData = new FormData();
             formData.append('tema_id', idTema);
             formData.append('categoria_id', idCategoria);
@@ -1569,8 +1736,9 @@ try {
                     } else {
                         loadingDiv.innerHTML = `
                             <div class="error-loading">
-                                <p>❌ ${data.message}</p>
-                                <p>No se pudieron cargar las preguntas</p>
+                                <h4>❌ Error al cargar preguntas</h4>
+                                <p>${data.message}</p>
+                                <button onclick="regresarPanelPrincipal()">Regresar</button>
                             </div>
                         `;
                     }
@@ -1580,11 +1748,132 @@ try {
                     const loadingDiv = document.querySelector('.loading-preguntas');
                     loadingDiv.innerHTML = `
                         <div class="error-loading">
-                            <p>❌ Error de conexión</p>
+                            <h4>❌ Error de conexión</h4>
                             <p>No se pudieron cargar las preguntas</p>
+                            <button onclick="regresarPanelPrincipal()">Regresar</button>
                         </div>
                     `;
                 });
+        }
+        
+        // Función para abrir el código QR en modal
+        function abrirCodigoQR() {
+            console.log('🔗 Mostrando código QR para descarga móvil...');
+            
+            const modal = document.getElementById('modalQR');
+            const loading = document.getElementById('loadingQRModal');
+            const contenedor = document.getElementById('contenedorQRModal');
+            const imagen = document.getElementById('imagenQRModal');
+            
+            // Mostrar modal
+            modal.style.display = 'block';
+            loading.style.display = 'block';
+            contenedor.style.display = 'none';
+            
+            // Obtener URL de descarga
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const path = window.location.pathname.replace('/inicio.php', '');
+            const downloadURL = `${protocol}//${host}${path}/descargarEstadisticas.php`;
+            
+            // Generar código QR usando API gratuita
+            const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(downloadURL)}`;
+            
+            // Cargar imagen QR
+            imagen.onload = function() {
+                loading.style.display = 'none';
+                contenedor.style.display = 'block';
+            };
+            
+            imagen.onerror = function() {
+                loading.innerHTML = '<p style="color: #dc3545;">❌ Error al generar código QR</p>';
+            };
+            
+            imagen.src = qrURL;
+            
+            // Guardar URL para otras funciones
+            window.currentDownloadURL = downloadURL;
+        }
+        
+        // Función para cerrar modal QR
+        function cerrarModalQR() {
+            const modal = document.getElementById('modalQR');
+            modal.style.display = 'none';
+        }
+        
+        // Función para descarga directa
+        function abrirDescargaDirecta() {
+            if (window.currentDownloadURL) {
+                window.open(window.currentDownloadURL, '_blank');
+            } else {
+                window.open('descargarEstadisticas.php', '_blank');
+            }
+        }
+        
+        // Función para copiar URL de descarga
+        function copiarURLDescarga() {
+            const url = window.currentDownloadURL || 'descargarEstadisticas.php';
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function() {
+                    alert('✅ URL copiada al portapapeles');
+                }, function(err) {
+                    console.error('Error al copiar: ', err);
+                    copiarURLFallback(url);
+                });
+            } else {
+                copiarURLFallback(url);
+            }
+        }
+        
+        // Función fallback para copiar URL
+        function copiarURLFallback(url) {
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('✅ URL copiada al portapapeles');
+                } else {
+                    alert('❌ No se pudo copiar la URL. Cópiala manualmente.');
+                }
+            } catch (err) {
+                console.error('Error al copiar: ', err);
+                alert('❌ No se pudo copiar la URL. Cópiala manualmente.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Función para compartir por WhatsApp desde modal
+        function compartirWhatsAppModal() {
+            const url = window.currentDownloadURL || 'descargarEstadisticas.php';
+            const usuario = '<?php echo addslashes($usuario_nombre); ?>';
+            const mensaje = `🧠 ReichMind - Mis Estadísticas de Trivia\n\n📊 Descarga mis resultados en Excel:\n${url}\n\n¡Mira qué tal lo estoy haciendo! 🎯\n\nUsuario: ${usuario}`;
+            const whatsappURL = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            
+            window.open(whatsappURL, '_blank');
+        }
+        
+        // Cerrar modal QR al hacer clic fuera de él
+        window.onclick = function(event) {
+            const modalQR = document.getElementById('modalQR');
+            const modalAvatar = document.getElementById('modalAvatar');
+            const modalBloqueo = document.getElementById('modalBloqueo');
+            
+            if (event.target === modalQR) {
+                cerrarModalQR();
+            }
+            if (event.target === modalAvatar) {
+                cerrarModalAvatar();
+            }
+            if (event.target === modalBloqueo) {
+                cerrarModalBloqueo();
+            }
         }
 
         // funcion para mostrar la pregunta actual
