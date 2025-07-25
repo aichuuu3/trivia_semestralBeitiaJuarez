@@ -440,6 +440,36 @@ try {
             margin-top: 8px;
             border: 1px solid #ffeaa7;
         }
+        
+        /* Estilos adicionales para el modal de bloqueo mejorado */
+        .requisito-nivel {
+            background: #e7f3ff;
+            color: #0056b3;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+        
+        .requisito-nivel small {
+            display: block;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .requisitos-lista {
+            text-align: left;
+            margin: 15px 0;
+        }
+        
+        .requisitos-lista ul {
+            padding-left: 20px;
+        }
+        
+        .requisitos-lista li {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -831,15 +861,32 @@ try {
             
             // Mostrar información sobre el estado de las categorías
             const monedasUsuario = <?php echo $usuario_monedas; ?>;
+            const nivelUsuario = '<?php echo addslashes($usuario_nivel); ?>';
             let mensajeInfo = '';
             
+            // Construir mensaje basado en monedas y nivel
             if (monedasUsuario < 150) {
-                mensajeInfo = `💰 Tienes ${monedasUsuario} monedas. Necesitas 150 para desbloquear Novato y 200 para Experto.`;
-            } else if (monedasUsuario < 200) {
-                mensajeInfo = `💰 Tienes ${monedasUsuario} monedas. ¡Solo te faltan ${200 - monedasUsuario} monedas para desbloquear Experto!`;
+                mensajeInfo = `💰 Tienes ${monedasUsuario} monedas. Necesitas 150 para Novato.`;
+            } else if (monedasUsuario < 200 || (nivelUsuario !== 'Novato' && nivelUsuario !== 'Experto')) {
+                let partes = [];
+                if (monedasUsuario < 200) {
+                    partes.push(`${200 - monedasUsuario} monedas más`);
+                }
+                if (nivelUsuario !== 'Novato' && nivelUsuario !== 'Experto') {
+                    partes.push('nivel Novato');
+                }
+                
+                if (partes.length > 0) {
+                    mensajeInfo = `💰 Para Experto necesitas: ${partes.join(' y ')}.`;
+                } else {
+                    mensajeInfo = `💰 ¡Todas las categorías desbloqueadas!`;
+                }
             } else {
-                mensajeInfo = `💰 ¡Excelente! Tienes ${monedasUsuario} monedas. Todas las categorías están desbloqueadas.`;
+                mensajeInfo = `💰 ¡Excelente! Todas las categorías están desbloqueadas.`;
             }
+            
+            // Agregar información sobre el nivel actual
+            mensajeInfo += ` Tu nivel actual: ${nivelUsuario}.`;
             
             console.log(mensajeInfo);
             
@@ -919,7 +966,9 @@ try {
                         
                         // Obtener monedas del usuario desde PHP
                         const monedasUsuario = <?php echo $usuario_monedas; ?>;
+                        const nivelUsuario = '<?php echo addslashes($usuario_nivel); ?>';
                         console.log('💰 Monedas del usuario:', monedasUsuario);
+                        console.log('🎯 Nivel del usuario:', nivelUsuario);
                         
                         // Crear botones de categorías con verificación de bloqueo
                         let botonesHTML = '';
@@ -940,21 +989,39 @@ try {
                             let bloqueada = false;
                             let razonBloqueo = '';
                             let monedasRequeridas = 0;
+                            let requisitos = [];
                             
                             if (categoria.nombre_categoria === 'Novato' && monedasUsuario < 150) {
                                 bloqueada = true;
-                                razonBloqueo = 'Necesitas 150 monedas';
+                                requisitos.push('150 monedas');
                                 monedasRequeridas = 150;
-                            } else if (categoria.nombre_categoria === 'Experto' && monedasUsuario < 200) {
-                                bloqueada = true;
-                                razonBloqueo = 'Necesitas 200 monedas';
-                                monedasRequeridas = 200;
+                            } else if (categoria.nombre_categoria === 'Experto') {
+                                // Para Experto: necesita 200 monedas Y ser Novato
+                                if (monedasUsuario < 200) {
+                                    requisitos.push('200 monedas');
+                                    monedasRequeridas = 200;
+                                }
+                                if (nivelUsuario !== 'Novato' && nivelUsuario !== 'Experto') {
+                                    requisitos.push('nivel Novato');
+                                }
+                                if (requisitos.length > 0) {
+                                    bloqueada = true;
+                                }
+                            }
+                            
+                            // Construir mensaje de bloqueo
+                            if (bloqueada) {
+                                if (requisitos.length === 1) {
+                                    razonBloqueo = `Necesitas ${requisitos[0]}`;
+                                } else if (requisitos.length === 2) {
+                                    razonBloqueo = `Necesitas ${requisitos.join(' y ')}`;
+                                }
                             }
                             
                             // Crear el botón con estilos condicionales
                             const claseBoton = bloqueada ? 'boton-categoria-bloqueada' : `boton-categoria ${colores[categoria.nombre_categoria]}`;
                             const funcionClick = bloqueada ? 
-                                `mostrarMensajeBloqueo('${categoria.nombre_categoria}', ${monedasRequeridas}, ${monedasUsuario})` : 
+                                `mostrarMensajeBloqueo('${categoria.nombre_categoria}', '${razonBloqueo}', ${monedasRequeridas}, ${monedasUsuario}, '${nivelUsuario}')` : 
                                 `seleccionarCategoria(${categoria.id_categoria}, '${categoria.nombre_categoria}')`;
                             
                             const descripcion = bloqueada ? razonBloqueo : 
@@ -970,9 +1037,9 @@ try {
                                     <span class="icono-categoria">${iconos[categoria.nombre_categoria]}${bloqueada ? '🔒' : ''}</span>
                                     <span class="nombre-categoria">${categoria.nombre_categoria}</span>
                                     <span class="descripcion-categoria">${descripcion}</span>
-                                    ${bloqueada ? 
+                                    ${bloqueada && monedasRequeridas > 0 ? 
                                         `<div class="monedas-faltantes">
-                                            ${monedasRequeridas - monedasUsuario} monedas más
+                                            ${Math.max(0, monedasRequeridas - monedasUsuario)} monedas más
                                         </div>` : ''}
                                 </button>
                             `;
@@ -1023,8 +1090,8 @@ try {
         }
 
         // Función para mostrar mensaje de categoría bloqueada
-        function mostrarMensajeBloqueo(categoria, monedasRequeridas, monedasActuales) {
-            console.log(`🔒 Mostrando bloqueo para ${categoria}: ${monedasActuales}/${monedasRequeridas} monedas`);
+        function mostrarMensajeBloqueo(categoria, razonBloqueo, monedasRequeridas, monedasActuales, nivelActual) {
+            console.log(`🔒 Mostrando bloqueo para ${categoria}: ${razonBloqueo}`);
             
             const modal = document.getElementById('modalBloqueo');
             const titulo = document.getElementById('tituloBloqueo');
@@ -1035,17 +1102,46 @@ try {
             // Configurar contenido del modal
             titulo.textContent = `Categoría ${categoria} Bloqueada`;
             
-            const monedasFaltantes = monedasRequeridas - monedasActuales;
-            mensaje.innerHTML = `
-                Para acceder a la categoría <strong>${categoria}</strong> necesitas <strong>${monedasRequeridas} monedas</strong>.<br>
-                Actualmente tienes <strong>${monedasActuales} monedas</strong>.<br>
-                Te faltan <strong style="color: #dc3545;">${monedasFaltantes} monedas</strong> para desbloquear esta categoría.
-            `;
+            let mensajeHTML = `Para acceder a la categoría <strong>${categoria}</strong> necesitas:<br><br>`;
             
-            // Configurar barra de progreso
-            const porcentaje = Math.min((monedasActuales / monedasRequeridas) * 100, 100);
-            barraProgreso.style.width = porcentaje + '%';
-            textoProgreso.textContent = `${monedasActuales} / ${monedasRequeridas}`;
+            // Verificar requisitos específicos para cada categoría
+            if (categoria === 'Novato') {
+                if (monedasActuales < 150) {
+                    const monedasFaltantes = 150 - monedasActuales;
+                    mensajeHTML += `💰 <strong>150 monedas</strong> (te faltan ${monedasFaltantes} monedas)<br>`;
+                    mensajeHTML += `<small style="color: #6c757d;">Actualmente tienes ${monedasActuales} monedas</small>`;
+                }
+            } else if (categoria === 'Experto') {
+                let requisitosHTML = [];
+                
+                if (monedasActuales < 200) {
+                    const monedasFaltantes = 200 - monedasActuales;
+                    requisitosHTML.push(`💰 <strong>200 monedas</strong> (te faltan ${monedasFaltantes} monedas)`);
+                }
+                
+                if (nivelActual !== 'Novato' && nivelActual !== 'Experto') {
+                    requisitosHTML.push(`⭐ <strong>Nivel Novato</strong> (tu nivel actual es ${nivelActual})`);
+                }
+                
+                if (requisitosHTML.length > 0) {
+                    mensajeHTML += requisitosHTML.join('<br>') + '<br><br>';
+                    mensajeHTML += `<div style="background: #e7f3ff; padding: 10px; border-radius: 8px; border-left: 4px solid #007bff; margin-top: 10px;">
+                        <small style="color: #0056b3;">💡 <strong>Consejo:</strong> Completa trivias de categoría Novato con 100% de aciertos para subir de nivel.</small>
+                    </div>`;
+                }
+            }
+            
+            mensaje.innerHTML = mensajeHTML;
+            
+            // Configurar barra de progreso solo si hay requisito de monedas
+            if (monedasRequeridas > 0) {
+                const porcentaje = Math.min((monedasActuales / monedasRequeridas) * 100, 100);
+                barraProgreso.style.width = porcentaje + '%';
+                textoProgreso.textContent = `${monedasActuales} / ${monedasRequeridas}`;
+                document.querySelector('.progreso-monedas').style.display = 'block';
+            } else {
+                document.querySelector('.progreso-monedas').style.display = 'none';
+            }
             
             // Mostrar modal
             modal.style.display = 'block';
