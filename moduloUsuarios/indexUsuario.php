@@ -13,7 +13,94 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link rel="stylesheet" href="../css/indexUsuario.css">
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        .table th {
+            background-color: #343a40;
+            color: white;
+            border-color: #454d55;
+        }
+        .badge {
+            font-size: 0.85em;
+        }
+        .btn-group .btn {
+            margin: 0 1px;
+        }
+        .table td {
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        /* Estilos para el contenedor con scroll */
+        .table-responsive {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        /* Personalizar scrollbar */
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Para Firefox */
+        .table-responsive {
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
+        }
+        
+        /* Hacer que el header sea sticky */
+        .thead-dark th {
+            position: sticky;
+            top: 0;
+            background-color: #343a40 !important;
+            z-index: 10;
+            border-bottom: 2px solid #454d55;
+        }
+        
+        /* Mejorar la apariencia en dispositivos móviles */
+        @media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            
+            .btn-group .btn {
+                padding: 0.25rem 0.4rem;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Indicador visual de scroll disponible */
+        .table-responsive::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 10px;
+            background: linear-gradient(to left, rgba(0,0,0,0.1), transparent);
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
 </head>
 
 <body>
@@ -44,37 +131,47 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                     <div class="card-body">
                         <form action="" method="post" id="frm">
                             <div class="form-group">
-                                <label for="">Nombre Usuario</label>
-                                <input type="text" name="nombre" placeholder="Nombre completo" required>
+                                <label for="nombre">Nombre Usuario <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Nombre completo" required minlength="2" maxlength="100">
+                                <small class="form-text text-muted">Mínimo 2 caracteres</small>
                             </div>
                     
                             <div class="form-group">
-                                <label for="">Email</label>
-                                <input type="email" name="email" placeholder="Correo electrónico" required>
+                                <label for="email">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" id="email" class="form-control" placeholder="correo@ejemplo.com" required>
+                                <small class="form-text text-muted">Debe ser un email válido</small>
                             </div>
                     
                             <div class="form-group">
-                                <label for="">Contraseña</label>
-                                <input type="password" name="password" placeholder="Contraseña" required>
+                                <label for="password">Contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" name="password" id="password" class="form-control" placeholder="Mínimo 6 caracteres" required minlength="6">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Mínimo 6 caracteres</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="">Confirmar contraseña</label>
-                                <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirmar contraseña" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="">Nivel de Conocimiento</label>
-                                <select name="nom_categoria" id="nom_categoria" class="form-control" required>
-                                    <option value="">Selecciona tu nivel</option>
-                                    <option value="principiante">Principiante</option>
-                                    <option value="novato">Novato</option>
-                                    <option value="avanzado">Avanzado</option>
-                                </select>
+                                <label for="confirm_password">Confirmar contraseña <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Repetir contraseña" required minlength="6">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirm_password')">
+                                            <i class="fas fa-eye" id="toggleConfirmPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Debe coincidir con la contraseña</small>
                             </div>
                         
                             <div class="form-group">
-                                <input type="button" value="Registrar" id="registrar" class="btn btn-primary btn-block">
+                                <button type="submit" id="registrar" class="btn btn-primary btn-block">
+                                    <i class="fas fa-user-plus"></i> Registrar Usuario
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -91,22 +188,33 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                         </form>
                     </div>
                 </div>
-                <table class="table table-hover table-resposive">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Contraseña</th>
-                            <th>Monedas Totales</th>
-                            <th>Nivel</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultado">
-
-                    </tbody>
-                </table>
+                
+                <!-- Contenedor con scroll horizontal -->
+                <div class="table-responsive" style="max-height: 600px; overflow-x: auto; overflow-y: auto;">
+                    <table class="table table-hover">
+                        <thead class="thead-dark" style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th style="min-width: 50px;">ID</th>
+                                <th style="min-width: 150px;">Nombre</th>
+                                <th style="min-width: 200px;">Email</th>
+                                <th style="min-width: 120px;">Contraseña</th>
+                                <th style="min-width: 100px;">Monedas</th>
+                                <th style="min-width: 120px;">Nivel</th>
+                                <th style="min-width: 150px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultado">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Cargando...</span>
+                                    </div>
+                                    <p class="mt-2">Cargando usuarios...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
             </div>
