@@ -119,8 +119,8 @@
                             </div>
                             <div class="card-body">
                                 <!-- Formulario de búsqueda, actualización y eliminación eliminado. Solo agregar preguntas habilitado. -->
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle">
+                                <div class="table-responsive" style="max-width:100%; overflow-x:auto;">
+                                    <table class="table table-hover align-middle" style="min-width:700px;">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -216,6 +216,56 @@
                 console.log(`Navegando a: ${section}`);
             });
         });
+
+        // AJAX para registrar pregunta
+        document.getElementById('registrar').addEventListener('click', function() {
+            const form = document.getElementById('frm');
+            const formData = new FormData(form);
+            fetch('registroPreguntas.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: data.message
+                    });
+                    form.reset();
+                    // Recargar la tabla de preguntas
+                    recargarPreguntas();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message
+                    });
+                }
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo registrar la pregunta.'
+                });
+            });
+        });
+
+        function recargarPreguntas() {
+            fetch('indexPreguntas.php?ajax=1')
+                .then(response => response.text())
+                .then(html => {
+                    // Extraer solo el tbody de la tabla de preguntas
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const nuevoTbody = tempDiv.querySelector('#resultado');
+                    if (nuevoTbody) {
+                        document.getElementById('resultado').innerHTML = nuevoTbody.innerHTML;
+                    }
+                });
+        }
     </script>
 </body>
 
