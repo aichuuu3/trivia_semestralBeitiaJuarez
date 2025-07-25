@@ -2193,43 +2193,104 @@ try {
 
         // funcion para descargar estadisticas
         function descargarEstadisticas() {
-            console.log('Descargando estadísticas...');
+            console.log('📊 Descargando estadísticas en formato Excel...');
             
-            // Crear contenido del archivo
-            const estadisticas = {
-                usuario: document.getElementById('username-display').textContent,
-                fecha: new Date().toLocaleDateString(),
-                monedas: Array.from(document.querySelectorAll('#lista-monedas li:not(.lista-vacia)')).map(li => li.textContent),
-                puntosTiempo: Array.from(document.querySelectorAll('#lista-puntos-tiempo li:not(.lista-vacia)')).map(li => li.textContent)
-            };
+            // Mostrar mensaje de carga
+            const botonDescargar = document.querySelector('.boton-descargar');
+            const textoOriginal = botonDescargar.innerHTML;
+            botonDescargar.innerHTML = '⏳ Generando Excel...';
+            botonDescargar.disabled = true;
             
-            const contenido = `
-ESTADÍSTICAS DE TRIVIA - REICHMIND
-=====================================
-Usuario: ${estadisticas.usuario}
-Fecha: ${estadisticas.fecha}
+            try {
+                // Crear un enlace temporal para descargar
+                const enlace = document.createElement('a');
+                enlace.href = 'descargarExcel.php';
+                enlace.download = `estadisticas_trivia_${new Date().toISOString().split('T')[0]}.xlsx`;
+                enlace.style.display = 'none';
+                
+                // Agregar al DOM, hacer clic y remover
+                document.body.appendChild(enlace);
+                enlace.click();
+                document.body.removeChild(enlace);
+                
+                // Restaurar botón después de un breve delay
+                setTimeout(() => {
+                    botonDescargar.innerHTML = textoOriginal;
+                    botonDescargar.disabled = false;
+                    
+                    // Mostrar notificación de éxito
+                    mostrarNotificacion('✅ Archivo Excel descargado correctamente', 'exito');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('❌ Error al descargar estadísticas:', error);
+                
+                // Restaurar botón en caso de error
+                botonDescargar.innerHTML = textoOriginal;
+                botonDescargar.disabled = false;
+                
+                // Mostrar notificación de error
+                mostrarNotificacion('❌ Error al generar el archivo Excel', 'error');
+            }
+        }
 
-MONEDAS GANADAS:
-${estadisticas.monedas.length > 0 ? estadisticas.monedas.join('\n') : 'No hay registros'}
-
-PUNTOS Y TIEMPO:
-${estadisticas.puntosTiempo.length > 0 ? estadisticas.puntosTiempo.join('\n') : 'No hay registros'}
-
-Generado automáticamente por ReichMind
-            `.trim();
+        // Función auxiliar para mostrar notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            // Crear elemento de notificación
+            const notificacion = document.createElement('div');
+            notificacion.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transition: all 0.3s ease;
+                opacity: 0;
+                transform: translateY(-20px);
+            `;
             
-            // Crear y descargar archivo
-            const blob = new Blob([contenido], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `estadisticas_trivia_${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            // Configurar colores según el tipo
+            switch (tipo) {
+                case 'exito':
+                    notificacion.style.background = '#28a745';
+                    break;
+                case 'error':
+                    notificacion.style.background = '#dc3545';
+                    break;
+                case 'advertencia':
+                    notificacion.style.background = '#ffc107';
+                    notificacion.style.color = '#212529';
+                    break;
+                default:
+                    notificacion.style.background = '#17a2b8';
+            }
             
-            alert('📊 Estadísticas descargadas correctamente');
+            notificacion.innerHTML = mensaje;
+            
+            // Agregar al DOM
+            document.body.appendChild(notificacion);
+            
+            // Animar entrada
+            setTimeout(() => {
+                notificacion.style.opacity = '1';
+                notificacion.style.transform = 'translateY(0)';
+            }, 100);
+            
+            // Remover después de 4 segundos
+            setTimeout(() => {
+                notificacion.style.opacity = '0';
+                notificacion.style.transform = 'translateY(-20px)';
+                
+                setTimeout(() => {
+                    if (notificacion.parentNode) {
+                        notificacion.parentNode.removeChild(notificacion);
+                    }
+                }, 300);
+            }, 4000);
         }
 
         // Variables globales para el cambio de avatar
