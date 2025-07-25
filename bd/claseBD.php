@@ -3,6 +3,31 @@
 include_once 'conexion.php';
 //Clase DB para manejar operaciones de base de datos
     class DB {
+        // --- MÉTODOS DE TOTALES PARA DASHBOARD ---
+        public function totalUsuarios() {
+            try {
+                $query = $this->pdo->query('SELECT COUNT(*) FROM usuarios');
+                return $query->fetchColumn();
+            } catch (PDOException $e) {
+                return 0;
+            }
+        }
+        public function totalTema() {
+            try {
+                $query = $this->pdo->query('SELECT COUNT(*) FROM temas');
+                return $query->fetchColumn();
+            } catch (PDOException $e) {
+                return 0;
+            }
+        }
+        public function totalPreguntas() {
+            try {
+                $query = $this->pdo->query('SELECT COUNT(*) FROM preguntas');
+                return $query->fetchColumn();
+            } catch (PDOException $e) {
+                return 0;
+            }
+        }
         private $pdo;
         
         public function __construct() {
@@ -263,6 +288,51 @@ include_once 'conexion.php';
                 return $query->fetchAll(PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
                 return [];
+            }
+        }
+
+        // MÉTODOS PARA ADMINISTRADORES
+        // Obtener datos de un administrador por ID
+        public function obtenerAdministrador($id) {
+            try {
+                $query = $this->pdo->prepare("SELECT id, nombre, email, password, fecha_registro, horas_totales FROM administradores WHERE id = :id");
+                $query->bindParam(":id", $id);
+                $query->execute();
+                return $query->fetch(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Actualizar nombre, email y/o password de administrador
+        public function actualizarAdministrador($id, $nombre, $email, $password = null) {
+            try {
+                if ($password !== null && $password !== '') {
+                    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+                    $query = $this->pdo->prepare("UPDATE administradores SET nombre = :nombre, email = :email, password = :password WHERE id = :id");
+                    $query->bindParam(":password", $passwordHash);
+                } else {
+                    $query = $this->pdo->prepare("UPDATE administradores SET nombre = :nombre, email = :email WHERE id = :id");
+                }
+                $query->bindParam(":nombre", $nombre);
+                $query->bindParam(":email", $email);
+                $query->bindParam(":id", $id);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Sumar segundos a horas_totales del administrador
+        public function sumarHorasAdministrador($id, $segundos) {
+            try {
+                // Suma los segundos a horas_totales (que es INT, en segundos)
+                $query = $this->pdo->prepare("UPDATE administradores SET horas_totales = horas_totales + :segundos WHERE id = :id");
+                $query->bindParam(":segundos", $segundos, PDO::PARAM_INT);
+                $query->bindParam(":id", $id);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
             }
         }
     }

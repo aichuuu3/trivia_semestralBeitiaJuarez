@@ -25,19 +25,13 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-calendar"></i></span>
-                        <span>Mensajes y notificaciones</span>
-                    </a>
-                </li>
-                <li>
                     <a href="../adminColaboradores/indexColaborador.php">
                         <span class="icon"><i class="fas fa-plus"></i></span>
                         <span>Administrar Colaboradores</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="../administrativos/configuracion.php">
                         <span class="icon"><i class="fas fa-cog"></i></span>
                         <span>Configuración</span>
                     </a>

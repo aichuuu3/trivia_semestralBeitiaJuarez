@@ -1,15 +1,12 @@
-<?php
+<?php /*
 session_start();
-$nombreUsuario = isset($_SESSION['admin_nombre']) ? $_SESSION['admin_nombre'] : '';
+// Verificar si el usuario está logueado como administrador
+if (!isset($_SESSION['usuario']) || $_SESSION['tipo'] != 'admin') {
+    header("Location: ../login.php");
+    exit();
+}
 
-require_once '../bd/claseBD.php';
-$db = new DB();
-$pdo = $db->getPdo();
-
-// Total usuarios
-$totalUsuarios = $db->totalUsuarios();
-$totalCategorias = $db->totalTema();
-$totalPreguntas = $db->totalPreguntas();
+$nombreUsuario = $_SESSION['usuario'];*/
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +31,34 @@ $totalPreguntas = $db->totalPreguntas();
 
     <div class="main-container">
         <!-- Sidebar -->
-        <?php include '../sidebar/sb.php'; ?>
+         <nav class="sidebar">
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="../colaboradores/ventanaColaborador.php" class="active">
+                        <span class="icon"><i class="fas fa-home"></i></span>
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../moduloTemas/indexTema.php">
+                        <span class="icon"><i class="fas fa-file-alt"></i></span>
+                        <span>Categorias</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../moduloPreguntas/indexPreguntas.php">
+                        <span class="icon"><i class="fas fa-question-circle"></i></span>
+                        <span>Preguntas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../administrativos/configuracion.php">
+                        <span class="icon"><i class="fas fa-cog"></i></span>
+                        <span>Configuración</span>
+                    </a>
+                </li>
+            </ul>
+        </nav> 
 
         <!-- Main Content -->
         <main class="main-content">
@@ -71,7 +95,7 @@ $totalPreguntas = $db->totalPreguntas();
                         <i class="fas fa-file-blank"></i>
                     </div>
                     <div class="card-title">Usuarios</div>
-                    <div class="card-description">Total de usuarios: <strong><?php echo $totalUsuarios; ?></strong></div>
+                    <div class="card-description">Total de usuarios</div>
                 </a>
 
                 <a href="#" class="action-card">
@@ -79,7 +103,7 @@ $totalPreguntas = $db->totalPreguntas();
                         <i class="fas fa-question-circle"></i>
                     </div>
                     <div class="card-title">Categorias</div>
-                    <div class="card-description">Total de categorías: <strong><?php echo $totalCategorias; ?></strong></div>
+                    <div class="card-description">Total de categorias</div>
                 </a>
 
                 <a href="#" class="action-card">
@@ -87,7 +111,7 @@ $totalPreguntas = $db->totalPreguntas();
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <div class="card-title">Preguntas</div>
-                    <div class="card-description">Total de preguntas: <strong><?php echo $totalPreguntas; ?></strong></div>
+                    <div class="card-description">Total de preguntas</div>
                 </a>
             </div>
         </main>

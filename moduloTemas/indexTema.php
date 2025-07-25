@@ -57,12 +57,6 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                     </a>
                 </li>
                 <li>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-calendar"></i></span>
-                        <span>Mensajes y notificaciones</span>
-                    </a>
-                </li>
-                <li>
                     <a href="../adminColaboradores/indexColaborador.php">
                         <span class="icon"><i class="fas fa-plus"></i></span>
                         <span>Administrar Colaboradores</span>
