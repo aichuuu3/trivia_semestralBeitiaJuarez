@@ -15,7 +15,7 @@
                 <li>
                     <a href="../moduloTemas/indexTema.php">
                         <span class="icon"><i class="fas fa-file-alt"></i></span>
-                        <span>Categorias</span>
+                        <span>Temas</span>
                     </a>
                 </li>
                 <li>
