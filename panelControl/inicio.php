@@ -20,14 +20,25 @@ $usuario_email = $_SESSION['usuario_email'] ?? '';
 // Obtener el avatar del usuario desde la base de datos
 $usuario_avatar = 'avatar.png'; // Valor por defecto
 try {
-    $stmt = $pdo->prepare("SELECT avatar FROM usuarios WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT avatar, cod_categoria FROM usuarios WHERE id = ?");
     $stmt->execute([$usuario_id]);
     $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($resultado && !empty($resultado['avatar'])) {
         $usuario_avatar = $resultado['avatar'];
     }
+    
+    // Obtener el nivel actual del usuario desde la base de datos
+    if ($resultado && $resultado['cod_categoria']) {
+        $stmtNivel = $pdo->prepare("SELECT nombre_categoria FROM categoria WHERE id_categoria = ?");
+        $stmtNivel->execute([$resultado['cod_categoria']]);
+        $nivelResult = $stmtNivel->fetch(PDO::FETCH_ASSOC);
+        if ($nivelResult) {
+            $usuario_nivel = $nivelResult['nombre_categoria'];
+            $_SESSION['usuario_nivel'] = $usuario_nivel; // Actualizar sesión
+        }
+    }
 } catch (PDOException $e) {
-    // En caso de error, usar avatar por defecto
+    // En caso de error, usar valores por defecto
     $usuario_avatar = 'avatar.png';
 }
 ?>
@@ -1050,6 +1061,9 @@ try {
         function seleccionarCategoria(idCategoria, nombreCategoria) {
             console.log(`Categoría seleccionada: ${nombreCategoria} (ID: ${idCategoria})`);
             
+            // Guardar la categoría actual para verificación posterior de nivel
+            categoriaActual = nombreCategoria;
+            
             // Ocultar los botones de categorías
             const botonesDiv = document.querySelector('.botones-categorias');
             const tituloCategoria = document.querySelector('.titulo-categorias');
@@ -1266,6 +1280,8 @@ try {
         let tiempoInicio = null;
         let tiempoFinal = null;
         let temporizadorIntervalo = null;
+        let categoriaActual = null; // Para rastrear la categoría de la trivia actual
+        let nivelUsuarioActual = '<?php echo addslashes($usuario_nivel); ?>'; // Nivel actual del usuario
 
         // funcion para cargar preguntas del tema seleccionado
         function cargarPreguntas(idTema, idCategoria, nombreTema, nombreCategoria) {
@@ -1450,7 +1466,7 @@ try {
         }
 
         // funcion para terminar la trivia
-        function terminarTrivia() {
+        async function terminarTrivia() {
             // Asegurar que el temporizador esté detenido
             detenerTemporizador();
             
@@ -1460,10 +1476,24 @@ try {
             const tiempoFormateado = `${minutosTotales}:${segundosTotales.toString().padStart(2, '0')}`;
             
             const porcentaje = ((puntosAcumulados / (preguntasTrivia.length * 10)) * 100).toFixed(1);
+            
+            // Verificar si puede subir de nivel (solo si tiene 100% de aciertos)
+            let resultadoNivel = { actualizado: false };
+            if (porcentaje == 100 && categoriaActual) {
+                console.log(`🔍 Verificando posible subida de nivel: ${nivelUsuarioActual} completando ${categoriaActual} con ${porcentaje}%`);
+                resultadoNivel = await verificarActualizacionNivel(categoriaActual, porcentaje);
+            }
+            
             let mensaje = `🎉 ¡Trivia Completada! 🎉\n\n`;
             mensaje += `📊 Puntuación: ${puntosAcumulados} / ${preguntasTrivia.length * 10} puntos\n`;
             mensaje += `📈 Porcentaje: ${porcentaje}%\n`;
             mensaje += `⏱️ Tiempo total: ${tiempoFormateado}\n\n`;
+            
+            // Agregar mensaje especial si subió de nivel
+            if (resultadoNivel.actualizado) {
+                mensaje += `🎊 ¡FELICIDADES! 🎊\n`;
+                mensaje += `📈 Has subido de nivel: ${resultadoNivel.nivelAnterior} → ${resultadoNivel.nivelNuevo}\n\n`;
+            }
             
             if (porcentaje >= 80) {
                 mensaje += `🏆 ¡Excelente! Eres un experto en este tema.`;
@@ -1475,13 +1505,140 @@ try {
                 mensaje += `💪 Sigue practicando, ¡puedes mejorar!`;
             }
             
+            // Agregar mensaje especial para puntaje perfecto sin subida de nivel
+            if (porcentaje == 100 && !resultadoNivel.actualizado) {
+                mensaje += `\n\n⭐ ¡Puntuación perfecta!`;
+                if (nivelUsuarioActual === categoriaActual) {
+                    mensaje += ` Has dominado tu nivel actual.`;
+                } else {
+                    mensaje += ` ¡Ya tienes este nivel dominado!`;
+                }
+            }
+            
             alert(mensaje);
+            
+            // Si el nivel fue actualizado, actualizar la interfaz
+            if (resultadoNivel.actualizado) {
+                actualizarInterfazNivel(resultadoNivel.nivelNuevo);
+            }
             
             // Agregar a las estadísticas con el tiempo real
             agregarPuntosTiempo(puntosAcumulados, tiempoFormateado);
             
             // Regresar al panel principal
             regresarPanelPrincipal();
+        }
+        
+        // Función para verificar si el usuario puede subir de nivel
+        async function verificarActualizacionNivel(categoria, porcentaje) {
+            try {
+                const response = await fetch('actualizarNivel.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        categoria: categoria,
+                        porcentaje: porcentaje
+                    })
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success && resultado.actualizado) {
+                    // Actualizar variable global del nivel
+                    nivelUsuarioActual = resultado.nivelNuevo;
+                    console.log(`🎊 Nivel actualizado: ${resultado.nivelAnterior} → ${resultado.nivelNuevo}`);
+                }
+                
+                return resultado;
+            } catch (error) {
+                console.error('Error al verificar actualización de nivel:', error);
+                return { actualizado: false };
+            }
+        }
+        
+        // Función para actualizar la interfaz cuando cambia el nivel
+        function actualizarInterfazNivel(nuevoNivel) {
+            console.log('🔄 Actualizando interfaz para nuevo nivel:', nuevoNivel);
+            
+            // Actualizar el nivel mostrado en el perfil
+            const nivelUsuarioElement = document.querySelector('.nivel-usuario');
+            if (nivelUsuarioElement) {
+                nivelUsuarioElement.textContent = `Nivel: ${nuevoNivel}`;
+            }
+            
+            // Actualizar el número de nivel en las estadísticas
+            const numeroNivelElement = document.querySelector('.numero-estadistica');
+            if (numeroNivelElement && numeroNivelElement.parentElement.querySelector('.etiqueta-estadistica').textContent === 'Nivel') {
+                let numeroNivel = '';
+                switch(nuevoNivel) {
+                    case 'Principiante':
+                        numeroNivel = '1';
+                        break;
+                    case 'Novato':
+                        numeroNivel = '2';
+                        break;
+                    case 'Experto':
+                        numeroNivel = '3';
+                        break;
+                    default:
+                        numeroNivel = '-';
+                }
+                numeroNivelElement.textContent = numeroNivel;
+            }
+            
+            // Mostrar una animación de celebración
+            mostrarAnimacionSubidaNivel(nuevoNivel);
+        }
+
+        // Función para mostrar animación de subida de nivel
+        function mostrarAnimacionSubidaNivel(nuevoNivel) {
+            // Crear elemento de animación
+            const animacion = document.createElement('div');
+            animacion.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 9999;
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                color: #333;
+                padding: 30px;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                animation: levelUpAnimation 3s ease-in-out;
+                pointer-events: none;
+            `;
+            
+            animacion.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <div>¡NIVEL ACTUALIZADO!</div>
+                <div style="font-size: 24px; margin-top: 10px;">${nuevoNivel}</div>
+            `;
+            
+            // Agregar estilos de animación
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes levelUpAnimation {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(animacion);
+            
+            // Remover después de la animación
+            setTimeout(() => {
+                animacion.remove();
+                style.remove();
+            }, 3000);
         }
 
         // funcion para regresar a la seleccion de temas
