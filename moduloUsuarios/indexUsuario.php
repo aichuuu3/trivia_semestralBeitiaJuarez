@@ -64,10 +64,11 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                             </div>
 
                             <div class="form-group">
-                                <select name="nivel" required>
+                                <label for="">Nivel de Conocimiento</label>
+                                <select name="nom_categoria" id="nom_categoria" class="form-control" required>
                                     <option value="">Selecciona tu nivel</option>
-                                    <option value="basico">Básico</option>
-                                    <option value="intermedio">Intermedio</option>
+                                    <option value="principiante">Principiante</option>
+                                    <option value="novato">Novato</option>
                                     <option value="avanzado">Avanzado</option>
                                 </select>
                             </div>
@@ -97,7 +98,9 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Contraseña</th>
-                            <th>Conocimiento</th>
+                            <th>Monedas Totales</th>
+                            <th>Nivel</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="resultado">
@@ -110,7 +113,7 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script src="../js/scriptUsuarios.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     
     <!-- Script para el menú lateral -->

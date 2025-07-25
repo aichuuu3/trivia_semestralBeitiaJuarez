@@ -1,15 +1,7 @@
 <?php
-/**
- * Clase ValidacionesColaborador
- * Centraliza todas las validaciones para colaboradores
- */
+
 class ValidacionesColaborador {
     
-    /**
-     * Limpia los datos de entrada de un colaborador
-     * @param array $datos - Array con los datos del colaborador
-     * @return array - Array con los datos limpiados
-     */
     public static function limpiarDatos($datos) {
         return [
             'email' => isset($datos['email']) ? trim(strtolower($datos['email'])) : '',
@@ -19,11 +11,6 @@ class ValidacionesColaborador {
         ];
     }
     
-    /**
-     * Valida el email
-     * @param string $email
-     * @return array - Array de errores (vacío si no hay errores)
-     */
     public static function validarEmail($email) {
         $errores = [];
         
@@ -38,11 +25,6 @@ class ValidacionesColaborador {
         return $errores;
     }
     
-    /**
-     * Valida el nombre
-     * @param string $nombre
-     * @return array - Array de errores (vacío si no hay errores)
-     */
     public static function validarNombre($nombre) {
         $errores = [];
         
@@ -59,12 +41,6 @@ class ValidacionesColaborador {
         return $errores;
     }
     
-    /**
-     * Valida la contraseña
-     * @param string $password
-     * @param bool $esRequerida - Si la contraseña es obligatoria (true para crear, false para editar)
-     * @return array - Array de errores (vacío si no hay errores)
-     */
     public static function validarPassword($password, $esRequerida = true) {
         $errores = [];
         
@@ -87,13 +63,6 @@ class ValidacionesColaborador {
         return $errores;
     }
     
-    /**
-     * Valida que el email sea único en la base de datos
-     * @param string $email
-     * @param object $db - Instancia de la clase DB
-     * @param int|null $idActual - ID del colaborador actual (para edición)
-     * @return array - Array de errores (vacío si no hay errores)
-     */
     public static function validarEmailUnico($email, $db, $idActual = null) {
         $errores = [];
         
@@ -127,13 +96,6 @@ class ValidacionesColaborador {
         return $errores;
     }
     
-    /**
-     * Valida todos los datos del colaborador
-     * @param array $datos - Array con los datos del colaborador
-     * @param object $db - Instancia de la clase DB
-     * @param bool $esCreacion - Si es una creación (true) o edición (false)
-     * @return array - Array de errores (vacío si no hay errores)
-     */
     public static function validarColaborador($datos, $db, $esCreacion = true) {
         $errores = [];
         
@@ -161,12 +123,6 @@ class ValidacionesColaborador {
         ];
     }
     
-    /**
-     * Valida solo los datos necesarios para operaciones específicas
-     * @param string $operacion - Tipo de operación (crear, actualizar, eliminar, obtener)
-     * @param array $datos - Datos a validar
-     * @return array - Array de errores
-     */
     public static function validarOperacion($operacion, $datos) {
         $errores = [];
         
@@ -180,7 +136,6 @@ class ValidacionesColaborador {
                 
             case 'crear':
             case 'actualizar':
-                // Estas operaciones usan validarColaborador completo
                 break;
                 
             default:

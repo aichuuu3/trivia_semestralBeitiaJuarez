@@ -29,17 +29,63 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
 
     <div class="main-container">
         <!-- Sidebar -->
-        <?php include '../sidebar/sb.php'; ?>
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="../administrativos/ventanaAdmin.php" >
+                        <span class="icon"><i class="fas fa-home"></i></span>
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../moduloUsuarios/indexUsuario.php" >
+                        <span class="icon"><i class="fas fa-users"></i></span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../moduloTemas/indexTema.php" class="active">
+                        <span class="icon"><i class="fas fa-file-alt"></i></span>
+                        <span>Categorias</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../moduloPreguntas/indexPreguntas.php">
+                        <span class="icon"><i class="fas fa-question-circle"></i></span>
+                        <span>Preguntas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="icon"><i class="fas fa-calendar"></i></span>
+                        <span>Mensajes y notificaciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../adminColaboradores/indexColaborador.php">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>Administrar Colaboradores</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="icon"><i class="fas fa-cog"></i></span>
+                        <span>Configuración</span>
+                    </a>
+                </li>
+            </ul>
+        </nav> 
 
         <!-- Main Content -->
         <main class="main-content">
             <div class="container-fluid">
-        <h1>🛍️ Sistema de Gestión de Usuarios</h1>
+        <h1>🛍️ Sistema de Gestión de Temas</h1>
         <div class="row">
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header bg-primary">
-                        <h3 class="text-center">Registro de usuarios</h3>
+                        <h3 class="text-center">Registro de Temas</h3>
                     </div>
                     <div class="card-body">
                         <form action="" method="post" id="frm">
