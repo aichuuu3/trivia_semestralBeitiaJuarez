@@ -301,6 +301,134 @@ try {
             background: #ccc;
             cursor: not-allowed;
         }
+        
+        /* Estilos para el modal de bloqueo */
+        .modal-bloqueo {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-bloqueo-contenido {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            color: #333;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+            border: 2px solid #e9ecef;
+        }
+        
+        .icono-bloqueo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .titulo-bloqueo {
+            color: #dc3545;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .mensaje-bloqueo {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #495057;
+        }
+        
+        .progreso-monedas {
+            margin: 20px 0;
+        }
+        
+        .barra-progreso-contenedor {
+            background: #e9ecef;
+            border-radius: 25px;
+            overflow: hidden;
+            height: 40px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .barra-progreso-monedas {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            border-radius: 25px;
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .texto-progreso {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .boton-cerrar-bloqueo {
+            background: linear-gradient(135deg, #533483, #7b2cbf);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(83, 52, 131, 0.3);
+        }
+        
+        .boton-cerrar-bloqueo:hover {
+            background: linear-gradient(135deg, #7b2cbf, #533483);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(83, 52, 131, 0.4);
+        }
+        
+        /* Estilos para categorías bloqueadas */
+        .boton-categoria-bloqueada {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6) !important;
+            color: #6c757d !important;
+            cursor: not-allowed !important;
+            opacity: 0.7;
+            border: 2px dashed #adb5bd !important;
+        }
+        
+        .boton-categoria-bloqueada:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .monedas-faltantes {
+            background: #fff3cd;
+            color: #856404;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+            border: 1px solid #ffeaa7;
+        }
     </style>
 </head>
 <body>
@@ -352,6 +480,34 @@ try {
             </div>
         </div>
     </div>
+    
+    <!-- Modal de categoría bloqueada -->
+    <div id="modalBloqueo" class="modal-bloqueo">
+        <div class="modal-bloqueo-contenido">
+            <div class="icono-bloqueo">🔒</div>
+            <h2 class="titulo-bloqueo" id="tituloBloqueo">Categoría Bloqueada</h2>
+            <p class="mensaje-bloqueo" id="mensajeBloqueo">
+                <!-- Se llenará dinámicamente -->
+            </p>
+            
+            <div class="progreso-monedas">
+                <div class="barra-progreso-contenedor">
+                    <div class="barra-progreso-monedas" id="barraProgresoMonedas" style="width: 0%;">
+                        <div class="texto-progreso" id="textoProgreso">0 / 0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #533483;">
+                <strong>💡 Consejo:</strong> Juega partidas en la categoría <strong>Principiante</strong> para ganar más monedas y desbloquear nuevas categorías.
+            </div>
+            
+            <button class="boton-cerrar-bloqueo" onclick="cerrarModalBloqueo()">
+                Entendido
+            </button>
+        </div>
+    </div>
+    
     <!-- Navbar -->
     <nav class="barra-navegacion">
         <div class="contenedor-nav">
@@ -662,6 +818,20 @@ try {
         function iniciarNuevaPartida() {
             console.log('🎮 Iniciando nueva partida...');
             
+            // Mostrar información sobre el estado de las categorías
+            const monedasUsuario = <?php echo $usuario_monedas; ?>;
+            let mensajeInfo = '';
+            
+            if (monedasUsuario < 150) {
+                mensajeInfo = `💰 Tienes ${monedasUsuario} monedas. Necesitas 150 para desbloquear Novato y 200 para Experto.`;
+            } else if (monedasUsuario < 200) {
+                mensajeInfo = `💰 Tienes ${monedasUsuario} monedas. ¡Solo te faltan ${200 - monedasUsuario} monedas para desbloquear Experto!`;
+            } else {
+                mensajeInfo = `💰 ¡Excelente! Tienes ${monedasUsuario} monedas. Todas las categorías están desbloqueadas.`;
+            }
+            
+            console.log(mensajeInfo);
+            
             try {
                 // Ocultar el contenido actual del panel de juego
                 const seccionPartida = document.querySelector('.seccion-partida');
@@ -683,6 +853,18 @@ try {
                 contenedorCategorias.className = 'contenedor-categorias';
                 contenedorCategorias.innerHTML = `
                     <h3 class="titulo-categorias">🎯 Selecciona una Categoría</h3>
+                    <div class="info-monedas" style="
+                        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+                        border: 2px solid #2196f3;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        text-align: center;
+                        color: #0d47a1;
+                        font-weight: bold;
+                    ">
+                        ${mensajeInfo}
+                    </div>
                     <div class="loading-categorias">
                         <div class="spinner"></div>
                         <p>Cargando categorías...</p>
@@ -724,7 +906,11 @@ try {
                         // Ocultar loading
                         loadingDiv.style.display = 'none';
                         
-                        // Crear botones de categorías
+                        // Obtener monedas del usuario desde PHP
+                        const monedasUsuario = <?php echo $usuario_monedas; ?>;
+                        console.log('💰 Monedas del usuario:', monedasUsuario);
+                        
+                        // Crear botones de categorías con verificación de bloqueo
                         let botonesHTML = '';
                         data.data.forEach(categoria => {
                             const iconos = {
@@ -739,16 +925,44 @@ try {
                                 'Experto': 'rojo'
                             };
                             
+                            // Verificar si la categoría está bloqueada
+                            let bloqueada = false;
+                            let razonBloqueo = '';
+                            let monedasRequeridas = 0;
+                            
+                            if (categoria.nombre_categoria === 'Novato' && monedasUsuario < 150) {
+                                bloqueada = true;
+                                razonBloqueo = 'Necesitas 150 monedas';
+                                monedasRequeridas = 150;
+                            } else if (categoria.nombre_categoria === 'Experto' && monedasUsuario < 200) {
+                                bloqueada = true;
+                                razonBloqueo = 'Necesitas 200 monedas';
+                                monedasRequeridas = 200;
+                            }
+                            
+                            // Crear el botón con estilos condicionales
+                            const claseBoton = bloqueada ? 'boton-categoria-bloqueada' : `boton-categoria ${colores[categoria.nombre_categoria]}`;
+                            const funcionClick = bloqueada ? 
+                                `mostrarMensajeBloqueo('${categoria.nombre_categoria}', ${monedasRequeridas}, ${monedasUsuario})` : 
+                                `seleccionarCategoria(${categoria.id_categoria}, '${categoria.nombre_categoria}')`;
+                            
+                            const descripcion = bloqueada ? razonBloqueo : 
+                                              (categoria.nombre_categoria === 'Principiante' ? 'Preguntas básicas' : 
+                                               categoria.nombre_categoria === 'Novato' ? 'Preguntas intermedias' : 
+                                               'Preguntas avanzadas');
+                            
                             botonesHTML += `
-                                <button class="boton-categoria ${colores[categoria.nombre_categoria]}" 
-                                        onclick="seleccionarCategoria(${categoria.id_categoria}, '${categoria.nombre_categoria}')">
-                                    <span class="icono-categoria">${iconos[categoria.nombre_categoria]}</span>
+                                <button class="${claseBoton}" 
+                                        onclick="${funcionClick}"
+                                        ${bloqueada ? 'disabled' : ''}
+                                        title="${bloqueada ? razonBloqueo : 'Clic para seleccionar'}">
+                                    <span class="icono-categoria">${iconos[categoria.nombre_categoria]}${bloqueada ? '🔒' : ''}</span>
                                     <span class="nombre-categoria">${categoria.nombre_categoria}</span>
-                                    <span class="descripcion-categoria">
-                                        ${categoria.nombre_categoria === 'Principiante' ? 'Preguntas básicas' : 
-                                          categoria.nombre_categoria === 'Novato' ? 'Preguntas intermedias' : 
-                                          'Preguntas avanzadas'}
-                                    </span>
+                                    <span class="descripcion-categoria">${descripcion}</span>
+                                    ${bloqueada ? 
+                                        `<div class="monedas-faltantes">
+                                            ${monedasRequeridas - monedasUsuario} monedas más
+                                        </div>` : ''}
                                 </button>
                             `;
                         });
@@ -795,6 +1009,41 @@ try {
             seccionPartida.style.display = 'block';
             contenedorListas.style.display = 'flex';
             seccionDescarga.style.display = 'block';
+        }
+
+        // Función para mostrar mensaje de categoría bloqueada
+        function mostrarMensajeBloqueo(categoria, monedasRequeridas, monedasActuales) {
+            console.log(`🔒 Mostrando bloqueo para ${categoria}: ${monedasActuales}/${monedasRequeridas} monedas`);
+            
+            const modal = document.getElementById('modalBloqueo');
+            const titulo = document.getElementById('tituloBloqueo');
+            const mensaje = document.getElementById('mensajeBloqueo');
+            const barraProgreso = document.getElementById('barraProgresoMonedas');
+            const textoProgreso = document.getElementById('textoProgreso');
+            
+            // Configurar contenido del modal
+            titulo.textContent = `Categoría ${categoria} Bloqueada`;
+            
+            const monedasFaltantes = monedasRequeridas - monedasActuales;
+            mensaje.innerHTML = `
+                Para acceder a la categoría <strong>${categoria}</strong> necesitas <strong>${monedasRequeridas} monedas</strong>.<br>
+                Actualmente tienes <strong>${monedasActuales} monedas</strong>.<br>
+                Te faltan <strong style="color: #dc3545;">${monedasFaltantes} monedas</strong> para desbloquear esta categoría.
+            `;
+            
+            // Configurar barra de progreso
+            const porcentaje = Math.min((monedasActuales / monedasRequeridas) * 100, 100);
+            barraProgreso.style.width = porcentaje + '%';
+            textoProgreso.textContent = `${monedasActuales} / ${monedasRequeridas}`;
+            
+            // Mostrar modal
+            modal.style.display = 'block';
+        }
+
+        // Función para cerrar modal de bloqueo
+        function cerrarModalBloqueo() {
+            const modal = document.getElementById('modalBloqueo');
+            modal.style.display = 'none';
         }
 
         // funcion para seleccionar categoria
@@ -1566,9 +1815,15 @@ Generado automáticamente por ReichMind
 
         // Cerrar modal al hacer clic fuera de él
         window.onclick = function(event) {
-            const modal = document.getElementById('modalAvatar');
-            if (event.target === modal) {
+            const modalAvatar = document.getElementById('modalAvatar');
+            const modalBloqueo = document.getElementById('modalBloqueo');
+            
+            if (event.target === modalAvatar) {
                 cerrarModalAvatar();
+            }
+            
+            if (event.target === modalBloqueo) {
+                cerrarModalBloqueo();
             }
         }
 
