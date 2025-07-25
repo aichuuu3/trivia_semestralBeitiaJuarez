@@ -278,9 +278,6 @@ try {
                         // Ruta a la carpeta de imágenes
                         $ruta_avatar = "../img/" . $usuario_avatar;
                         
-                        // Debug: mostrar información en comentarios HTML
-                        echo "<!-- Debug Avatar: Usuario ID: $usuario_id, Avatar: $usuario_avatar, Ruta: $ruta_avatar, Existe: " . (file_exists($ruta_avatar) ? 'SI' : 'NO') . " -->";
-                        
                         // Verificar si el archivo de avatar existe
                         if (file_exists($ruta_avatar)) {
                             // Mostrar imagen del avatar desde la base de datos
@@ -495,11 +492,6 @@ try {
             <div class="seccion-partida">
                 <button class="boton-iniciar-partida" onclick="iniciarNuevaPartida()">
                     Iniciar Nueva Partida
-                </button>
-                
-                <!-- Botón de debug temporal -->
-                <button style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-left: 10px; cursor: pointer;" onclick="alert('✅ JavaScript funciona!')">
-                    🔧 Test
                 </button>
             </div>
 
