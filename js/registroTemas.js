@@ -51,6 +51,9 @@ function guardarTema() {
     })
     .then(response => response.text())
     .then(data => {
+        // Limpiar la respuesta de espacios en blanco
+        data = data.trim();
+        
         if (data === 'ok') {
             Swal.fire('Éxito', 'Tema registrado correctamente', 'success');
             limpiarFormulario();
@@ -131,6 +134,9 @@ function eliminarTema(id_tema) {
             })
             .then(response => response.text())
             .then(data => {
+                // Limpiar la respuesta de espacios en blanco
+                data = data.trim();
+                
                 if (data === 'eliminado') {
                     Swal.fire('Eliminado', 'Tema eliminado correctamente', 'success');
                     cargarTemas();

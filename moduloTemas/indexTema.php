@@ -61,7 +61,7 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
                         <form action="" method="post" id="frm">
                             <div class="form-group">
                                 <label for="">Categoría</label>
-                                <input type="text" name="Categoria" id="nombre_tema" placeholder="Nombre categoría" required>
+                                <input type="text" name="nombre_tema" id="nombre_tema" placeholder="Nombre categoría" required>
                             </div>
                             <div class="form-group">
                                 <label for="">Descripción</label>
