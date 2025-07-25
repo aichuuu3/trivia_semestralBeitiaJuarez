@@ -6,19 +6,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $db = new DB();
     $pdo = $db->getPdo();
-    $stmt = $pdo->prepare('SELECT * FROM administradores WHERE email = ? AND activo = 1');
-    $stmt->execute([$email]);
-    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($admin && password_verify($password, $admin['password'])) {
-        session_start();
-        $_SESSION['admin_id'] = $admin['id'];
-        $_SESSION['admin_nombre'] = $admin['nombre'];
-        $_SESSION['rol'] = 'admin'; // Guardar el tipo de usuario
-        header('Location: ventanaAdmin.php');
-        exit;
-    } else {
-        $loginError = 'Correo o contraseña incorrectos.';
-    }
+$stmt = $pdo->prepare('SELECT * FROM colaboradores WHERE email = ? AND activo = 1');
+$stmt->execute([$email]);
+$colaborador = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($colaborador && password_verify($password, $colaborador['password'])) {
+    session_start();
+    $_SESSION['colaborador_id'] = $colaborador['id'];
+    $_SESSION['colaborador_nombre'] = $colaborador['nombre'];
+    $_SESSION['rol'] = 'colaborador'; // Guardar el tipo de usuario
+    header('Location: ventanaColaborador.php');
+    exit;
+} else {
+    $loginError = 'Correo o contraseña incorrectos.';
+}
 }
 ?>
 <!DOCTYPE html>
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
+    <title>Colaborador Login</title>
     <link rel="stylesheet" href="../css/loginAdmin.css?v=<?php echo time(); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
+</form>
 <script>
 // Evita submit si el correo no es válido
 document.querySelector('.login-form').addEventListener('submit', function(e) {
@@ -72,7 +73,7 @@ document.querySelector('.login-form').addEventListener('submit', function(e) {
         e.preventDefault();
     }
 });
-// Validación JS para correo institucional ReichMind
+// Validación JS para correo institucional ReichMind (colaboradores)
 const emailInput = document.getElementById('email');
 const feedback = document.getElementById('email-feedback');
 let lastEmailChecked = '';
@@ -80,13 +81,13 @@ let lastEmailValid = false;
 
 function validateEmailFormat(email) {
     // nombre.apellido o nombre.apellido1,2,3... @reichmind.com
-    const regex = /^[a-zA-Z]+\.[a-zA-Z]+\d*@reichmind\.com$/;
+    const regex = /^[a-zA-Z]+\.[a-zA-Z]+\d{0,2}@reichmind\.com$/;
     return regex.test(email);
 }
 
 async function checkEmailExists(email) {
-    // AJAX a PHP para validar existencia
-    const res = await fetch('validarAdminEmail.php?email=' + encodeURIComponent(email));
+    // AJAX a PHP para validar existencia en colaboradores
+    const res = await fetch('validarColaboradorEmail.php?email=' + encodeURIComponent(email));
     const data = await res.json();
     return data.exists;
 }
@@ -110,7 +111,7 @@ emailInput.addEventListener('input', async function() {
     const exists = await checkEmailExists(email);
     if (email !== lastEmailChecked) return; // Evita race conditions
     if (!exists) {
-        feedback.textContent = 'Este correo no está registrado como administrativo.';
+        feedback.textContent = 'Este correo no está registrado como colaborador.';
         emailInput.style.borderColor = '#ff4d6d';
         lastEmailValid = false;
     } else {

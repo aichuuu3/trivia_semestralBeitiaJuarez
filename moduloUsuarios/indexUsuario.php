@@ -13,94 +13,6 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link rel="stylesheet" href="../css/indexUsuario.css">
-    <style>
-        .table th {
-            background-color: #343a40;
-            color: white;
-            border-color: #454d55;
-        }
-        .badge {
-            font-size: 0.85em;
-        }
-        .btn-group .btn {
-            margin: 0 1px;
-        }
-        .table td {
-            vertical-align: middle;
-            white-space: nowrap;
-        }
-        .spinner-border {
-            width: 2rem;
-            height: 2rem;
-        }
-        
-        /* Estilos para el contenedor con scroll */
-        .table-responsive {
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
-        
-        /* Personalizar scrollbar */
-        .table-responsive::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        .table-responsive::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        
-        /* Para Firefox */
-        .table-responsive {
-            scrollbar-width: thin;
-            scrollbar-color: #888 #f1f1f1;
-        }
-        
-        /* Hacer que el header sea sticky */
-        .thead-dark th {
-            position: sticky;
-            top: 0;
-            background-color: #343a40 !important;
-            z-index: 10;
-            border-bottom: 2px solid #454d55;
-        }
-        
-        /* Mejorar la apariencia en dispositivos móviles */
-        @media (max-width: 768px) {
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-            
-            .btn-group .btn {
-                padding: 0.25rem 0.4rem;
-                font-size: 0.75rem;
-            }
-        }
-        
-        /* Indicador visual de scroll disponible */
-        .table-responsive::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 10px;
-            background: linear-gradient(to left, rgba(0,0,0,0.1), transparent);
-            pointer-events: none;
-            z-index: 5;
-        }
-    </style>
 </head>
 
 <body>
@@ -113,10 +25,26 @@ $nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
             <span>ReichMind</span>
         </div>
     </header>
-
+        <?php
+    session_start();
+    if (!isset($_SESSION['rol'])) {
+        exit;
+    }
+    ?>
     <div class="main-container">
         <!-- Sidebar -->
-        <?php include '../sidebar/sb.php'; ?>  
+        <?php
+        // Sidebar dinámico
+        if ($_SESSION['rol'] === 'admin') {
+            echo '<div class="sidebar">';
+            include '../sidebar/sb.php';
+            echo '</div>';
+        } elseif ($_SESSION['rol'] === 'colaborador') {
+            echo '<div class="sidebar">';
+            include '../sidebar/sbcolaborador.php';
+            echo '</div>';
+        }
+        ?> 
 
         <!-- Main Content -->
         <main class="main-content">
