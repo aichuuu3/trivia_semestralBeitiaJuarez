@@ -16,11 +16,12 @@ $usuario_nombre = $_SESSION['usuario_nombre'] ?? 'Usuario';
 $usuario_nivel = $_SESSION['usuario_nivel'] ?? 'Sin asignar';
 $usuario_monedas = $_SESSION['usuario_monedas'] ?? 0;
 $usuario_email = $_SESSION['usuario_email'] ?? '';
+$usuario_partidas_ganadas = 0; // Inicializar partidas ganadas
 
 // Obtener el avatar del usuario desde la base de datos
 $usuario_avatar = 'avatar.png'; // Valor por defecto
 try {
-    $stmt = $pdo->prepare("SELECT avatar, cod_categoria, monedas_totales FROM usuarios WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT avatar, cod_categoria, monedas_totales, partidas_ganadas, partidas_fallidas FROM usuarios WHERE id = ?");
     $stmt->execute([$usuario_id]);
     $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($resultado && !empty($resultado['avatar'])) {
@@ -31,6 +32,17 @@ try {
     if ($resultado && isset($resultado['monedas_totales'])) {
         $usuario_monedas = (int)$resultado['monedas_totales'];
         $_SESSION['usuario_monedas'] = $usuario_monedas; // Actualizar sesión
+    }
+    
+    // Actualizar las partidas ganadas del usuario
+    if ($resultado && isset($resultado['partidas_ganadas'])) {
+        $usuario_partidas_ganadas = (int)$resultado['partidas_ganadas'];
+    }
+    
+    // Actualizar las partidas fallidas del usuario
+    $usuario_partidas_fallidas = 0;
+    if ($resultado && isset($resultado['partidas_fallidas'])) {
+        $usuario_partidas_fallidas = (int)$resultado['partidas_fallidas'];
     }
     
     // Obtener el nivel actual del usuario desde la base de datos
@@ -520,6 +532,61 @@ try {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        
+        @keyframes pulseUpdate {
+            0% { 
+                transform: scale(1); 
+                background: rgba(40, 167, 69, 0.1);
+            }
+            50% { 
+                transform: scale(1.1); 
+                background: rgba(40, 167, 69, 0.3);
+                color: #28a745;
+            }
+            100% { 
+                transform: scale(1); 
+                background: transparent;
+            }
+        }
+        
+        @keyframes pulseUpdateFallida {
+            0% { 
+                transform: scale(1); 
+                background: rgba(220, 53, 69, 0.1);
+            }
+            50% { 
+                transform: scale(1.1); 
+                background: rgba(220, 53, 69, 0.3);
+                color: #dc3545;
+            }
+            100% { 
+                transform: scale(1); 
+                background: transparent;
+            }
+        }
+        
+        @keyframes pulseUnlock {
+            0% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            25% { 
+                transform: scale(1.05); 
+                box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+            }
+            50% { 
+                transform: scale(1.1); 
+                box-shadow: 0 6px 30px rgba(40, 167, 69, 0.6);
+            }
+            75% { 
+                transform: scale(1.05); 
+                box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+            }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+        }
     </style>
 </head>
 <body>
@@ -803,13 +870,13 @@ try {
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">🏆</div>
-                    <div class="numero-estadistica">--</div>
+                    <div class="numero-estadistica"><?php echo number_format($usuario_partidas_ganadas); ?></div>
                     <div class="etiqueta-estadistica">Partidas Ganadas</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">❌</div>
-                    <div class="numero-estadistica">--</div>
+                    <div class="numero-estadistica"><?php echo number_format($usuario_partidas_fallidas); ?></div>
                     <div class="etiqueta-estadistica">Partidas Fallidas</div>
                 </div>
                 
@@ -889,6 +956,15 @@ try {
             console.log('🎯 Nivel: <?php echo addslashes($usuario_nivel); ?>');
             console.log('💰 Monedas: <?php echo $usuario_monedas; ?>');
             
+            // Inicializar variables globales dinámicas
+            monedasUsuarioActual = <?php echo $usuario_monedas; ?>;
+            nivelUsuarioActual = '<?php echo addslashes($usuario_nivel); ?>';
+            partidasGanadasActual = <?php echo $usuario_partidas_ganadas; ?>;
+            partidasFallidasActual = <?php echo $usuario_partidas_fallidas ?? 0; ?>;
+            console.log('✅ Variables dinámicas inicializadas');
+            console.log('🏆 Partidas ganadas:', partidasGanadasActual);
+            console.log('❌ Partidas fallidas:', partidasFallidasActual);
+            
             // Verificar si las funciones de ventanas.js están disponibles
             if (typeof verificarSesion === 'function') {
                 // No es necesario verificar sesión, ya se carga desde PHP
@@ -910,8 +986,8 @@ try {
             console.log('🎮 Iniciando nueva partida...');
             
             // Mostrar información sobre el estado de las categorías
-            const monedasUsuario = <?php echo $usuario_monedas; ?>;
-            const nivelUsuario = '<?php echo addslashes($usuario_nivel); ?>';
+            const monedasUsuario = monedasUsuarioActual;
+            const nivelUsuario = nivelUsuarioActual;
             let mensajeInfo = '';
             
             // Construir mensaje basado en monedas y nivel
@@ -1014,9 +1090,9 @@ try {
                         // Ocultar loading
                         loadingDiv.style.display = 'none';
                         
-                        // Obtener monedas del usuario desde PHP
-                        const monedasUsuario = <?php echo $usuario_monedas; ?>;
-                        const nivelUsuario = '<?php echo addslashes($usuario_nivel); ?>';
+                        // Obtener monedas del usuario desde variables dinámicas
+                        const monedasUsuario = monedasUsuarioActual;
+                        const nivelUsuario = nivelUsuarioActual;
                         console.log('💰 Monedas del usuario:', monedasUsuario);
                         console.log('🎯 Nivel del usuario:', nivelUsuario);
                         
@@ -1451,6 +1527,9 @@ try {
         let temporizadorIntervalo = null;
         let categoriaActual = null; // Para rastrear la categoría de la trivia actual
         let nivelUsuarioActual = '<?php echo addslashes($usuario_nivel); ?>'; // Nivel actual del usuario
+        let monedasUsuarioActual = <?php echo $usuario_monedas; ?>; // Monedas actuales del usuario
+        let partidasGanadasActual = <?php echo $usuario_partidas_ganadas; ?>; // Partidas ganadas actuales del usuario
+        let partidasFallidasActual = <?php echo $usuario_partidas_fallidas ?? 0; ?>; // Partidas fallidas actuales del usuario
 
         // funcion para cargar preguntas del tema seleccionado
         function cargarPreguntas(idTema, idCategoria, nombreTema, nombreCategoria) {
@@ -1825,9 +1904,19 @@ try {
                 }
             }
             
-            // Mostrar información sobre el estado de las monedas
+            // Mostrar información sobre el estado de las monedas y partidas ganadas
             if (resultadoMonedas.success) {
                 mensaje += `\n\n💰 Tus monedas totales: ${resultadoMonedas.monedas_nuevas}`;
+                
+                // Mostrar mensaje especial si ganó la partida
+                if (resultadoMonedas.es_partida_ganada) {
+                    mensaje += `\n🏆 ¡Partida ganada! Total: ${resultadoMonedas.partidas_ganadas_nuevas}`;
+                }
+                
+                // Mostrar mensaje si falló la partida
+                if (resultadoMonedas.es_partida_fallida) {
+                    mensaje += `\n❌ Partida fallida. Total fallidas: ${resultadoMonedas.partidas_fallidas_nuevas}`;
+                }
                 
                 // Mostrar resumen detallado de monedas después del alert principal
                 setTimeout(() => {
@@ -1844,17 +1933,102 @@ try {
                 actualizarInterfazNivel(resultadoNivel.nivelNuevo);
             }
             
-            // Actualizar display de monedas en la interfaz si fue exitoso
+            // Actualizar display de monedas y partidas ganadas en la interfaz si fue exitoso
             if (resultadoMonedas.success) {
                 actualizarDisplayMonedas(resultadoMonedas.monedas_nuevas);
+                if (resultadoMonedas.es_partida_ganada) {
+                    actualizarDisplayPartidasGanadas(resultadoMonedas.partidas_ganadas_nuevas);
+                }
+                if (resultadoMonedas.es_partida_fallida) {
+                    actualizarDisplayPartidasFallidas(resultadoMonedas.partidas_fallidas_nuevas);
+                }
             }
             
             // Agregar a las estadísticas con el tiempo real
             agregarPuntosTiempo(puntosAcumulados, tiempoFormateado);
             agregarMoneda(monedasTotales);
             
+            // Verificar si se desbloquearon nuevas categorías
+            verificarDesbloqueoCategoria();
+            
             // Regresar al panel principal
             regresarPanelPrincipal();
+        }
+        
+        // Función para verificar si se desbloquearon nuevas categorías
+        function verificarDesbloqueoCategoria() {
+            console.log('🔓 Verificando desbloqueo de categorías...');
+            
+            // Verificar si hay algún contenedor de categorías visible
+            const contenedorCategorias = document.querySelector('.contenedor-categorias');
+            if (contenedorCategorias && contenedorCategorias.style.display !== 'none') {
+                // Si el usuario está en la pantalla de selección de categorías, recargarlas
+                const botonesDiv = document.querySelector('.botones-categorias');
+                if (botonesDiv && botonesDiv.style.display !== 'none') {
+                    console.log('🔄 Recargando categorías por posible desbloqueo...');
+                    cargarCategorias();
+                    
+                    // Mostrar notificación si se desbloqueó algo nuevo
+                    setTimeout(() => {
+                        verificarNotificacionDesbloqueo();
+                    }, 500);
+                }
+            }
+        }
+        
+        // Función para verificar y mostrar notificación de categorías desbloqueadas
+        function verificarNotificacionDesbloqueo() {
+            const monedasActuales = monedasUsuarioActual;
+            const nivelActual = nivelUsuarioActual;
+            
+            // Guardar estados anteriores para comparar
+            if (!window.estadosCategoriasAnteriores) {
+                window.estadosCategoriasAnteriores = {
+                    novato: false,
+                    experto: false
+                };
+            }
+            
+            // Verificar qué categorías están ahora disponibles
+            let categoriasDesbloqueadas = [];
+            
+            // Verificar Novato
+            const novatoDisponible = monedasActuales >= 150;
+            if (novatoDisponible && !window.estadosCategoriasAnteriores.novato) {
+                categoriasDesbloqueadas.push('Novato');
+            }
+            window.estadosCategoriasAnteriores.novato = novatoDisponible;
+            
+            // Verificar Experto
+            const expertoDisponible = monedasActuales >= 200 && (nivelActual === 'Novato' || nivelActual === 'Experto');
+            if (expertoDisponible && !window.estadosCategoriasAnteriores.experto) {
+                categoriasDesbloqueadas.push('Experto');
+            }
+            window.estadosCategoriasAnteriores.experto = expertoDisponible;
+            
+            // Mostrar notificación si hay categorías desbloqueadas
+            if (categoriasDesbloqueadas.length > 0) {
+                let mensaje = categoriasDesbloqueadas.length === 1 ? 
+                    `🎉 ¡Nueva categoría desbloqueada: ${categoriasDesbloqueadas[0]}!` : 
+                    `🎉 ¡Nuevas categorías desbloqueadas: ${categoriasDesbloqueadas.join(' y ')}!`;
+                
+                mostrarNotificacion(mensaje, 'exito');
+                
+                // Agregar efecto visual a los botones desbloqueados
+                setTimeout(() => {
+                    categoriasDesbloqueadas.forEach(categoria => {
+                        const boton = Array.from(document.querySelectorAll('.boton-categoria')).find(btn => 
+                            btn.textContent.includes(categoria)
+                        );
+                        if (boton) {
+                            boton.style.animation = 'pulseUnlock 2s ease-in-out';
+                            setTimeout(() => {
+                                boton.style.animation = '';
+                            }, 2000);
+                        }
+                    });
+                }, 600);
+            }
         }
         
         // Función para calcular bonificaciones finales
@@ -1939,14 +2113,62 @@ try {
         
         // Función para actualizar el display de monedas en la interfaz
         function actualizarDisplayMonedas(nuevasMonedas) {
+            // Actualizar variable global de monedas
+            monedasUsuarioActual = nuevasMonedas;
+            
             // Actualizar en el perfil si existe
             const monedasElement = document.querySelector('.numero-estadistica');
             if (monedasElement && monedasElement.parentElement.querySelector('.etiqueta-estadistica').textContent.includes('Monedas')) {
                 monedasElement.textContent = nuevasMonedas;
             }
             
-            // También actualizar variable global de PHP simulada en JavaScript
             console.log(`💰 Monedas actualizadas en interfaz: ${nuevasMonedas}`);
+        }
+        
+        // Función para actualizar el display de partidas ganadas en la interfaz
+        function actualizarDisplayPartidasGanadas(nuevasPartidasGanadas) {
+            // Actualizar variable global de partidas ganadas
+            partidasGanadasActual = nuevasPartidasGanadas;
+            
+            // Buscar el elemento específico de partidas ganadas
+            const estadisticas = document.querySelectorAll('.numero-estadistica');
+            estadisticas.forEach(elemento => {
+                const etiqueta = elemento.parentElement.querySelector('.etiqueta-estadistica');
+                if (etiqueta && etiqueta.textContent.includes('Partidas Ganadas')) {
+                    elemento.textContent = nuevasPartidasGanadas;
+                    
+                    // Agregar efecto visual de actualización
+                    elemento.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                    setTimeout(() => {
+                        elemento.style.animation = '';
+                    }, 600);
+                }
+            });
+            
+            console.log(`🏆 Partidas ganadas actualizadas en interfaz: ${nuevasPartidasGanadas}`);
+        }
+        
+        // Función para actualizar el display de partidas fallidas en la interfaz
+        function actualizarDisplayPartidasFallidas(nuevasPartidasFallidas) {
+            // Actualizar variable global de partidas fallidas
+            partidasFallidasActual = nuevasPartidasFallidas;
+            
+            // Buscar el elemento específico de partidas fallidas
+            const estadisticas = document.querySelectorAll('.numero-estadistica');
+            estadisticas.forEach(elemento => {
+                const etiqueta = elemento.parentElement.querySelector('.etiqueta-estadistica');
+                if (etiqueta && etiqueta.textContent.includes('Partidas Fallidas')) {
+                    elemento.textContent = nuevasPartidasFallidas;
+                    
+                    // Agregar efecto visual de actualización (en rojo para fallidas)
+                    elemento.style.animation = 'pulseUpdateFallida 0.6s ease-in-out';
+                    setTimeout(() => {
+                        elemento.style.animation = '';
+                    }, 600);
+                }
+            });
+            
+            console.log(`❌ Partidas fallidas actualizadas en interfaz: ${nuevasPartidasFallidas}`);
         }
         
         // Función para mostrar resumen detallado de monedas ganadas
@@ -2055,6 +2277,9 @@ try {
         // Función para actualizar la interfaz cuando cambia el nivel
         function actualizarInterfazNivel(nuevoNivel) {
             console.log('🔄 Actualizando interfaz para nuevo nivel:', nuevoNivel);
+            
+            // Actualizar variable global del nivel
+            nivelUsuarioActual = nuevoNivel;
             
             // Actualizar el nivel mostrado en el perfil
             const nivelUsuarioElement = document.querySelector('.nivel-usuario');

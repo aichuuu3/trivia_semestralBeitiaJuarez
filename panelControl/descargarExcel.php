@@ -14,7 +14,7 @@ $db = new DB();
 $pdo = $db->getPdo();
 
 // Obtener datos del usuario
-$stmt = $pdo->prepare("SELECT nombre, email, cod_categoria, monedas_totales FROM usuarios WHERE id = ?");
+$stmt = $pdo->prepare("SELECT nombre, email, cod_categoria, monedas_totales, partidas_ganadas FROM usuarios WHERE id = ?");
 $stmt->execute([$usuario_id]);
 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -33,7 +33,7 @@ $nivel_usuario = $categoria ? $categoria['nombre_categoria'] : 'No definido';
 // Obtener historial de monedas (si existe)
 $historial_monedas = [];
 try {
-    $stmt = $pdo->prepare("SELECT fecha, monedas_ganadas, categoria, tema, puntos, tiempo_total 
+    $stmt = $pdo->prepare("SELECT fecha, monedas_ganadas, categoria, tema, puntos, tiempo_total, partida_ganada 
                           FROM historial_monedas 
                           WHERE usuario_id = ? 
                           ORDER BY fecha DESC 
@@ -73,6 +73,7 @@ fputcsv($output, ['Nombre', $usuario['nombre']], ',');
 fputcsv($output, ['Email', $usuario['email']], ',');
 fputcsv($output, ['Nivel', $nivel_usuario], ',');
 fputcsv($output, ['Monedas Totales', $usuario['monedas_totales']], ',');
+fputcsv($output, ['Partidas Ganadas', $usuario['partidas_ganadas'] ?? 0], ',');
 fputcsv($output, ['Fecha del Reporte', date('Y-m-d H:i:s')], ',');
 fputcsv($output, [], ','); // Línea vacía
 
@@ -80,18 +81,23 @@ fputcsv($output, [], ','); // Línea vacía
 $total_partidas = count($historial_monedas);
 $total_monedas_ganadas = array_sum(array_column($historial_monedas, 'monedas_ganadas'));
 $total_puntos = array_sum(array_column($historial_monedas, 'puntos'));
+$total_partidas_ganadas = array_sum(array_column($historial_monedas, 'partida_ganada'));
 
 fputcsv($output, ['RESUMEN DE ESTADÍSTICAS'], ',');
 fputcsv($output, ['Métrica', 'Valor'], ',');
 fputcsv($output, ['Total de Partidas Jugadas', $total_partidas], ',');
+fputcsv($output, ['Total de Partidas Ganadas (100%)', $total_partidas_ganadas], ',');
 fputcsv($output, ['Total de Monedas Ganadas en Partidas', $total_monedas_ganadas], ',');
 fputcsv($output, ['Total de Puntos Acumulados', $total_puntos], ',');
 
 if ($total_partidas > 0) {
     $promedio_monedas = round($total_monedas_ganadas / $total_partidas, 2);
     $promedio_puntos = round($total_puntos / $total_partidas, 2);
+    $porcentaje_ganadas = round(($total_partidas_ganadas / $total_partidas) * 100, 1);
+    
     fputcsv($output, ['Promedio de Monedas por Partida', $promedio_monedas], ',');
     fputcsv($output, ['Promedio de Puntos por Partida', $promedio_puntos], ',');
+    fputcsv($output, ['Porcentaje de Partidas Ganadas', $porcentaje_ganadas . '%'], ',');
 }
 
 fputcsv($output, [], ','); // Línea vacía
@@ -105,7 +111,8 @@ if (!empty($historial_monedas)) {
         'Categoría', 
         'Tema', 
         'Puntos', 
-        'Tiempo (segundos)'
+        'Tiempo (segundos)',
+        'Partida Ganada'
     ], ',');
     
     foreach ($historial_monedas as $registro) {
@@ -115,7 +122,8 @@ if (!empty($historial_monedas)) {
             $registro['categoria'] ?? 'N/A',
             $registro['tema'] ?? 'N/A',
             $registro['puntos'] ?? 0,
-            $registro['tiempo_total'] ?? 0
+            $registro['tiempo_total'] ?? 0,
+            ($registro['partida_ganada'] ?? 0) ? 'Sí' : 'No'
         ], ',');
     }
 } else {

@@ -32,8 +32,8 @@ try {
         exit();
     }
     
-    // Obtener monedas actuales del usuario
-    $stmt = $pdo->prepare("SELECT monedas_totales FROM usuarios WHERE id = ?");
+    // Obtener monedas actuales del usuario, partidas ganadas y partidas fallidas
+    $stmt = $pdo->prepare("SELECT monedas_totales, partidas_ganadas, partidas_fallidas FROM usuarios WHERE id = ?");
     $stmt->execute([$usuario_id]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -43,36 +43,51 @@ try {
     }
     
     $monedas_actuales = (int)$usuario['monedas_totales'];
+    $partidas_ganadas_actuales = (int)($usuario['partidas_ganadas'] ?? 0);
+    $partidas_fallidas_actuales = (int)($usuario['partidas_fallidas'] ?? 0);
     $nuevas_monedas = $monedas_actuales + $monedas_ganadas;
+    
+    // Verificar si es una partida ganada (100% de aciertos) o fallida
+    $es_partida_ganada = ($porcentaje >= 100);
+    $es_partida_fallida = ($porcentaje < 100);
+    
+    $nuevas_partidas_ganadas = $partidas_ganadas_actuales + ($es_partida_ganada ? 1 : 0);
+    $nuevas_partidas_fallidas = $partidas_fallidas_actuales + ($es_partida_fallida ? 1 : 0);
     
     // Comenzar transacción
     $pdo->beginTransaction();
     
     try {
-        // Actualizar monedas del usuario
-        $stmt = $pdo->prepare("UPDATE usuarios SET monedas_totales = ? WHERE id = ?");
-        $success = $stmt->execute([$nuevas_monedas, $usuario_id]);
+        // Actualizar monedas, partidas ganadas y partidas fallidas del usuario
+        $stmt = $pdo->prepare("UPDATE usuarios SET monedas_totales = ?, partidas_ganadas = ?, partidas_fallidas = ? WHERE id = ?");
+        $success = $stmt->execute([$nuevas_monedas, $nuevas_partidas_ganadas, $nuevas_partidas_fallidas, $usuario_id]);
         
         if (!$success) {
-            throw new Exception('Error al actualizar monedas del usuario');
+            throw new Exception('Error al actualizar datos del usuario');
         }
         
         // Actualizar la sesión
         $_SESSION['usuario_monedas'] = $nuevas_monedas;
         
-        // Registrar en historial de monedas
-        $stmt = $pdo->prepare("INSERT INTO historial_monedas (usuario_id, monedas_ganadas, categoria, porcentaje, tiempo_total, fecha_ganadas) VALUES (?, ?, ?, ?, ?, NOW())");
-        $stmt->execute([$usuario_id, $monedas_ganadas, $categoria, $porcentaje, $tiempo_total]);
+        // Registrar en historial de monedas incluyendo si fue partida ganada
+        $stmt = $pdo->prepare("INSERT INTO historial_monedas (usuario_id, monedas_ganadas, categoria, porcentaje, tiempo_total, partida_ganada, fecha_ganadas) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->execute([$usuario_id, $monedas_ganadas, $categoria, $porcentaje, $tiempo_total, $es_partida_ganada ? 1 : 0]);
         
         // Confirmar transacción
         $pdo->commit();
         
         echo json_encode([
             'success' => true, 
-            'message' => 'Monedas actualizadas correctamente',
+            'message' => 'Datos actualizados correctamente',
             'monedas_anteriores' => $monedas_actuales,
             'monedas_ganadas' => $monedas_ganadas,
-            'monedas_nuevas' => $nuevas_monedas
+            'monedas_nuevas' => $nuevas_monedas,
+            'partidas_ganadas_anteriores' => $partidas_ganadas_actuales,
+            'partidas_ganadas_nuevas' => $nuevas_partidas_ganadas,
+            'partidas_fallidas_anteriores' => $partidas_fallidas_actuales,
+            'partidas_fallidas_nuevas' => $nuevas_partidas_fallidas,
+            'es_partida_ganada' => $es_partida_ganada,
+            'es_partida_fallida' => $es_partida_fallida
         ]);
         
     } catch (Exception $e) {
