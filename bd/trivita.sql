@@ -23,6 +23,31 @@ SET time_zone = "+00:00";
 
 -- --------------------------------------------------------
 
+
+--
+-- Estructura de tabla para la tabla `administradores`
+--
+
+CREATE TABLE `administradores` (
+  `id` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `avatar` varchar(255) DEFAULT 'avatar.png',
+  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  `horas_totales` int(11) DEFAULT 0,
+  `activo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `administradores`
+--
+
+INSERT INTO `administradores` (`id`, `nombre`, `email`, `password`, `avatar`, `fecha_registro`, `horas_totales`, `activo`) VALUES
+(1, 'Edgar Juarez', 'edgar.juarez@reichmind.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'avatar.png', '2025-07-25 00:00:00', 0, 1);
+
+-- --------------------------------------------------------
+
 --
 -- Estructura de tabla para la tabla `categoria`
 --
@@ -373,6 +398,13 @@ INSERT INTO `usuarios` (`id`, `nombre`, `email`, `password`, `cod_categoria`, `a
 --
 
 --
+-- Indices de la tabla `administradores`
+--
+ALTER TABLE `administradores`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
 -- Indices de la tabla `categoria`
 --
 ALTER TABLE `categoria`
@@ -425,6 +457,12 @@ ALTER TABLE `usuarios`
 --
 -- AUTO_INCREMENT de las tablas volcadas
 --
+
+--
+-- AUTO_INCREMENT de la tabla `administradores`
+--
+ALTER TABLE `administradores`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `categoria`

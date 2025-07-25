@@ -296,7 +296,7 @@ include_once 'conexion.php';
         // Obtener datos de un administrador por ID
         public function obtenerAdministrador($id) {
             try {
-                $query = $this->pdo->prepare("SELECT id, nombre, email, password, fecha_registro, horas_totales FROM administradores WHERE id = :id");
+                $query = $this->pdo->prepare("SELECT id, nombre, email, password, avatar, fecha_registro, horas_totales FROM administradores WHERE id = :id");
                 $query->bindParam(":id", $id);
                 $query->execute();
                 return $query->fetch(PDO::FETCH_ASSOC);
@@ -320,6 +320,30 @@ include_once 'conexion.php';
                 $query->bindParam(":id", $id);
                 return $query->execute();
             } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Actualizar avatar del administrador
+        public function actualizarAvatarAdministrador($id, $avatar) {
+            try {
+                $query = $this->pdo->prepare("UPDATE administradores SET avatar = :avatar WHERE id = :id");
+                $query->bindParam(":avatar", $avatar);
+                $query->bindParam(":id", $id);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
+
+        // Insertar nueva imagen de avatar
+        public function insertarImagen($nombre_archivo, $nombre_display, $ruta_completa, $extension, $tamaño_kb) {
+            try {
+                $query = $this->pdo->prepare("INSERT INTO imagenes (nombre_archivo, nombre_display, ruta_completa, extension, tamaño_kb, tipo_imagen, descripcion, activa) 
+                                            VALUES (?, ?, ?, ?, ?, 'avatar', 'Avatar personalizado subido por administrador', 1)");
+                return $query->execute([$nombre_archivo, $nombre_display, $ruta_completa, $extension, $tamaño_kb]);
+            } catch (PDOException $e) {
+                error_log("Error en insertarImagen: " . $e->getMessage());
                 return false;
             }
         }

@@ -16,15 +16,33 @@ $usuario_nombre = $_SESSION['usuario_nombre'] ?? 'Usuario';
 $usuario_nivel = $_SESSION['usuario_nivel'] ?? 'Sin asignar';
 $usuario_monedas = $_SESSION['usuario_monedas'] ?? 0;
 $usuario_email = $_SESSION['usuario_email'] ?? '';
+$usuario_partidas_ganadas = 0; // Inicializar partidas ganadas
 
 // Obtener el avatar del usuario desde la base de datos
 $usuario_avatar = 'avatar.png'; // Valor por defecto
 try {
-    $stmt = $pdo->prepare("SELECT avatar, cod_categoria FROM usuarios WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT avatar, cod_categoria, monedas_totales, partidas_ganadas, partidas_fallidas FROM usuarios WHERE id = ?");
     $stmt->execute([$usuario_id]);
     $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($resultado && !empty($resultado['avatar'])) {
         $usuario_avatar = $resultado['avatar'];
+    }
+    
+    // Actualizar las monedas del usuario con los datos reales de la base de datos
+    if ($resultado && isset($resultado['monedas_totales'])) {
+        $usuario_monedas = (int)$resultado['monedas_totales'];
+        $_SESSION['usuario_monedas'] = $usuario_monedas; // Actualizar sesión
+    }
+    
+    // Actualizar las partidas ganadas del usuario
+    if ($resultado && isset($resultado['partidas_ganadas'])) {
+        $usuario_partidas_ganadas = (int)$resultado['partidas_ganadas'];
+    }
+    
+    // Actualizar las partidas fallidas del usuario
+    $usuario_partidas_fallidas = 0;
+    if ($resultado && isset($resultado['partidas_fallidas'])) {
+        $usuario_partidas_fallidas = (int)$resultado['partidas_fallidas'];
     }
     
     // Obtener el nivel actual del usuario desde la base de datos
@@ -416,6 +434,42 @@ try {
             box-shadow: 0 6px 20px rgba(83, 52, 131, 0.4);
         }
         
+        /* Estilos para el botón QR */
+        .boton-qr {
+            background: linear-gradient(135deg, #28a745, #20c997) !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 25px !important;
+            border-radius: 25px !important;
+            cursor: pointer !important;
+            font-weight: bold !important;
+            margin-left: 10px !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            font-size: 14px !important;
+        }
+        
+        .boton-qr:hover {
+            background: linear-gradient(135deg, #20c997, #28a745) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4) !important;
+        }
+        
+        /* Responsive para botones de descarga */
+        @media (max-width: 768px) {
+            .seccion-descarga {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            
+            .boton-qr {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+        }
+        
         /* Estilos para categorías bloqueadas */
         .boton-categoria-bloqueada {
             background: linear-gradient(135deg, #e9ecef, #dee2e6) !important;
@@ -469,6 +523,163 @@ try {
         .requisitos-lista li {
             margin: 8px 0;
             line-height: 1.4;
+        }
+        
+        /* Estilos para monedas ganadas */
+        .monedas-ganadas {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+            animation: coinGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes coinGlow {
+            0%, 100% { box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 4px 20px rgba(255, 215, 0, 0.6); }
+        }
+        
+        .info-juego {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .contador-pregunta, .temporizador, .puntos-acumulados, .monedas-ganadas {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .temporizador.activo {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes pulseUpdate {
+            0% { 
+                transform: scale(1); 
+                background: rgba(40, 167, 69, 0.1);
+            }
+            50% { 
+                transform: scale(1.1); 
+                background: rgba(40, 167, 69, 0.3);
+                color: #28a745;
+            }
+            100% { 
+                transform: scale(1); 
+                background: transparent;
+            }
+        }
+        
+        @keyframes pulseUpdateFallida {
+            0% { 
+                transform: scale(1); 
+                background: rgba(220, 53, 69, 0.1);
+            }
+            50% { 
+                transform: scale(1.1); 
+                background: rgba(220, 53, 69, 0.3);
+                color: #dc3545;
+            }
+            100% { 
+                transform: scale(1); 
+                background: transparent;
+            }
+        }
+        
+        @keyframes pulseUnlock {
+            0% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            25% { 
+                transform: scale(1.05); 
+                box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+            }
+            50% { 
+                transform: scale(1.1); 
+                box-shadow: 0 6px 30px rgba(40, 167, 69, 0.6);
+            }
+            75% { 
+                transform: scale(1.05); 
+                box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+            }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+        }
+        
+        @keyframes pulseUpdateNivel {
+            0% { 
+                transform: scale(1); 
+                background: rgba(255, 193, 7, 0.1);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            25% { 
+                transform: scale(1.05); 
+                background: rgba(255, 193, 7, 0.2);
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+            }
+            50% { 
+                transform: scale(1.15); 
+                background: rgba(255, 193, 7, 0.3);
+                box-shadow: 0 6px 24px rgba(255, 193, 7, 0.5);
+                font-weight: bold;
+            }
+            75% { 
+                transform: scale(1.05); 
+                background: rgba(255, 193, 7, 0.2);
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+            }
+            100% { 
+                transform: scale(1); 
+                background: transparent;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                font-weight: normal;
+            }
+        }
+        
+        @keyframes pulseAvatar {
+            0% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+            25% { 
+                transform: scale(1.1); 
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+            }
+            50% { 
+                transform: scale(1.2); 
+                box-shadow: 0 6px 24px rgba(255, 193, 7, 0.6);
+            }
+            75% { 
+                transform: scale(1.1); 
+                box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
+            }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+        }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
         }
     </style>
 </head>
@@ -549,15 +760,111 @@ try {
         </div>
     </div>
     
+    <!-- Modal de código QR -->
+    <div id="modalQR" class="modal-avatar" style="z-index: 1002;">
+        <div class="modal-contenido" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📱 Descarga Móvil</h2>
+                <button class="cerrar-modal" onclick="cerrarModalQR()">&times;</button>
+            </div>
+            
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📲</div>
+                <h3 style="color: #533483; margin-bottom: 15px;">Escanea con tu móvil</h3>
+                <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">
+                    Usa la cámara de tu teléfono o una app de códigos QR para descargar tus estadísticas
+                </p>
+                
+                <div id="loadingQRModal" style="display: block;">
+                    <div class="spinner" style="margin: 20px auto;"></div>
+                    <p>Generando código QR...</p>
+                </div>
+                
+                <div id="contenedorQRModal" style="display: none;">
+                    <div style="
+                        background: white;
+                        padding: 20px;
+                        border-radius: 15px;
+                        margin: 20px auto;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                        border: 3px solid #533483;
+                        max-width: 250px;
+                    ">
+                        <img id="imagenQRModal" src="" alt="Código QR" style="
+                            width: 100%;
+                            height: auto;
+                            border-radius: 10px;
+                        ">
+                    </div>
+                    
+                    <div style="
+                        background: #e8f5e8;
+                        padding: 15px;
+                        border-radius: 10px;
+                        margin: 15px 0;
+                        border-left: 5px solid #28a745;
+                        text-align: left;
+                        font-size: 14px;
+                    ">
+                        <strong style="color: #28a745;">📋 Pasos:</strong>
+                        <ol style="margin: 5px 0; padding-left: 20px;">
+                            <li>Abre la cámara de tu teléfono</li>
+                            <li>Apunta al código QR</li>
+                            <li>Toca la notificación que aparece</li>
+                            <li>El Excel se descargará automáticamente</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                    <button onclick="abrirDescargaDirecta()" style="
+                        background: linear-gradient(135deg, #533483, #7b2cbf);
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">
+                        📥 Descarga Directa
+                    </button>
+                    
+                    <button onclick="copiarURLDescarga()" style="
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">
+                        📋 Copiar URL
+                    </button>
+                    
+                    <button onclick="compartirWhatsAppModal()" style="
+                        background: #25d366;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">
+                        💬 WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Navbar -->
     <nav class="barra-navegacion">
         <div class="contenedor-nav">
             <div class="marca-nav">
                 <h1>🧠 ReichMind</h1>
-            </div>
-            
-            <div class="menu-nav">
-                <a href="#" class="enlace-nav activo">🏠 Inicio</a>
             </div>
             
             <div class="usuario-nav">
@@ -747,25 +1054,25 @@ try {
             <div class="cuadricula-estadisticas">
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">💰</div>
-                    <div class="numero-estadistica"><?php echo number_format($usuario_monedas); ?></div>
+                    <div class="numero-estadistica" id="display-monedas"><?php echo number_format($usuario_monedas); ?></div>
                     <div class="etiqueta-estadistica">Monedas Totales</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">🏆</div>
-                    <div class="numero-estadistica">--</div>
+                    <div class="numero-estadistica" id="display-partidas-ganadas"><?php echo number_format($usuario_partidas_ganadas); ?></div>
                     <div class="etiqueta-estadistica">Partidas Ganadas</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">❌</div>
-                    <div class="numero-estadistica">--</div>
+                    <div class="numero-estadistica" id="display-partidas-fallidas"><?php echo number_format($usuario_partidas_fallidas); ?></div>
                     <div class="etiqueta-estadistica">Partidas Fallidas</div>
                 </div>
                 
                 <div class="tarjeta-estadistica">
                     <div class="icono-estadistica">⭐</div>
-                    <div class="numero-estadistica"><?php 
+                    <div class="numero-estadistica" id="display-nivel"><?php 
                         // Mostrar número del nivel basado en la categoría
                         $nivel_numero = '';
                         switch($usuario_nivel) {
@@ -821,9 +1128,24 @@ try {
             </div>
 
             <!-- boton de descarga -->
-            <div class="seccion-descarga">
-                <button class="boton-descargar" onclick="descargarEstadisticas()">
-                    Descargar Estadísticas
+            <div class="seccion-descarga" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="boton-descargar" onclick="descargarEstadisticas()" style="
+                    background: linear-gradient(135deg, #533483, #7b2cbf);
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(83, 52, 131, 0.3);
+                    min-width: 200px;
+                ">
+                    📥 Descargar Excel
+                </button>
+                
+                <button class="boton-qr" onclick="abrirCodigoQR()" title="Generar código QR para descargar en móvil">
+                    📱 Código QR Móvil
                 </button>
             </div>
         </div>
@@ -838,6 +1160,15 @@ try {
             console.log('👤 Usuario logueado: <?php echo addslashes($usuario_nombre); ?>');
             console.log('🎯 Nivel: <?php echo addslashes($usuario_nivel); ?>');
             console.log('💰 Monedas: <?php echo $usuario_monedas; ?>');
+            
+            // Inicializar variables globales dinámicas
+            monedasUsuarioActual = <?php echo $usuario_monedas; ?>;
+            nivelUsuarioActual = '<?php echo addslashes($usuario_nivel); ?>';
+            partidasGanadasActual = <?php echo $usuario_partidas_ganadas; ?>;
+            partidasFallidasActual = <?php echo $usuario_partidas_fallidas ?? 0; ?>;
+            console.log('✅ Variables dinámicas inicializadas');
+            console.log('🏆 Partidas ganadas:', partidasGanadasActual);
+            console.log('❌ Partidas fallidas:', partidasFallidasActual);
             
             // Verificar si las funciones de ventanas.js están disponibles
             if (typeof verificarSesion === 'function') {
@@ -860,8 +1191,8 @@ try {
             console.log('🎮 Iniciando nueva partida...');
             
             // Mostrar información sobre el estado de las categorías
-            const monedasUsuario = <?php echo $usuario_monedas; ?>;
-            const nivelUsuario = '<?php echo addslashes($usuario_nivel); ?>';
+            const monedasUsuario = monedasUsuarioActual;
+            const nivelUsuario = nivelUsuarioActual;
             let mensajeInfo = '';
             
             // Construir mensaje basado en monedas y nivel
@@ -964,9 +1295,9 @@ try {
                         // Ocultar loading
                         loadingDiv.style.display = 'none';
                         
-                        // Obtener monedas del usuario desde PHP
-                        const monedasUsuario = <?php echo $usuario_monedas; ?>;
-                        const nivelUsuario = '<?php echo addslashes($usuario_nivel); ?>';
+                        // Obtener monedas del usuario desde variables dinámicas
+                        const monedasUsuario = monedasUsuarioActual;
+                        const nivelUsuario = nivelUsuarioActual;
                         console.log('💰 Monedas del usuario:', monedasUsuario);
                         console.log('🎯 Nivel del usuario:', nivelUsuario);
                         
@@ -1073,6 +1404,23 @@ try {
         function regresarPanelPrincipal() {
             console.log('Regresando al panel principal...');
             
+            // Limpiar variables del juego
+            preguntasTrivia = [];
+            preguntaActual = 0;
+            puntosAcumulados = 0;
+            monedasGanadas = 0;
+            respuestasCorrectas = 0;
+            respuestaSeleccionada = null;
+            tiempoInicio = null;
+            tiempoInicioPregunta = null;
+            tiempoFinal = null;
+            categoriaActual = null;
+            
+            // Detener temporizador si está activo
+            if (temporizadorIntervalo) {
+                detenerTemporizador();
+            }
+            
             // Eliminar contenedor de categorías
             const contenedorCategorias = document.querySelector('.contenedor-categorias');
             if (contenedorCategorias) {
@@ -1084,9 +1432,9 @@ try {
             const contenedorListas = document.querySelector('.contenedor-listas');
             const seccionDescarga = document.querySelector('.seccion-descarga');
             
-            seccionPartida.style.display = 'block';
-            contenedorListas.style.display = 'flex';
-            seccionDescarga.style.display = 'block';
+            if (seccionPartida) seccionPartida.style.display = 'block';
+            if (contenedorListas) contenedorListas.style.display = 'flex';
+            if (seccionDescarga) seccionDescarga.style.display = 'block';
         }
 
         // Función para mostrar mensaje de categoría bloqueada
@@ -1305,6 +1653,30 @@ try {
             botonRegresar.style.display = 'block';
         }
 
+        // funcion para regresar a la seleccion de temas
+        function regresarATemas(idCategoria, nombreCategoria) {
+            console.log(`Regresando a temas de ${nombreCategoria}...`);
+            
+            // Limpiar variables del juego
+            preguntasTrivia = [];
+            preguntaActual = 0;
+            puntosAcumulados = 0;
+            monedasGanadas = 0;
+            respuestasCorrectas = 0;
+            respuestaSeleccionada = null;
+            tiempoInicio = null;
+            tiempoInicioPregunta = null;
+            tiempoFinal = null;
+            
+            // Detener temporizador si está activo
+            if (temporizadorIntervalo) {
+                detenerTemporizador();
+            }
+            
+            // Llamar directamente a seleccionarCategoria para recrear la selección de temas
+            seleccionarCategoria(idCategoria, nombreCategoria);
+        }
+
         // funcion para seleccionar tema y comenzar trivia
         function seleccionarTema(idTema, nombreTema, idCategoria, nombreCategoria) {
             console.log(`Tema seleccionado: ${nombreTema} (ID: ${idTema}) en categoría ${nombreCategoria}`);
@@ -1341,6 +1713,9 @@ try {
                         <div class="puntos-acumulados">
                             Puntos: <span class="puntos">0</span>
                         </div>
+                        <div class="monedas-ganadas">
+                            💰 <span class="monedas">0</span> monedas
+                        </div>
                     </div>
                     <div class="pregunta-contenedor">
                         <h4 class="texto-pregunta"></h4>
@@ -1372,15 +1747,65 @@ try {
         let preguntasTrivia = [];
         let preguntaActual = 0;
         let puntosAcumulados = 0;
+        let monedasGanadas = 0; // Monedas ganadas en la trivia actual
+        let respuestasCorrectas = 0; // Contador de respuestas correctas
         let respuestaSeleccionada = null;
         let tiempoInicio = null;
+        let tiempoInicioPregunta = null; // Tiempo de inicio de la pregunta actual
         let tiempoFinal = null;
         let temporizadorIntervalo = null;
         let categoriaActual = null; // Para rastrear la categoría de la trivia actual
         let nivelUsuarioActual = '<?php echo addslashes($usuario_nivel); ?>'; // Nivel actual del usuario
+        let monedasUsuarioActual = <?php echo $usuario_monedas; ?>; // Monedas actuales del usuario
+        let partidasGanadasActual = <?php echo $usuario_partidas_ganadas; ?>; // Partidas ganadas actuales del usuario
+        let partidasFallidasActual = <?php echo $usuario_partidas_fallidas ?? 0; ?>; // Partidas fallidas actuales del usuario
 
         // funcion para cargar preguntas del tema seleccionado
         function cargarPreguntas(idTema, idCategoria, nombreTema, nombreCategoria) {
+            console.log(`Cargando preguntas para tema: ${nombreTema}`);
+            
+            // Limpiar el contenedor y mostrar pantalla de carga
+            const contenedorCategorias = document.querySelector('.contenedor-categorias');
+            contenedorCategorias.innerHTML = `
+                <h3 class="titulo-juego">🎮 ${nombreTema} - ${nombreCategoria}</h3>
+                <div class="loading-preguntas">
+                    <div class="spinner"></div>
+                    <p>Preparando preguntas...</p>
+                </div>
+                <div class="juego-trivia" style="display: none;">
+                    <div class="info-juego">
+                        <div class="contador-pregunta">
+                            Pregunta <span class="pregunta-actual">1</span> de <span class="total-preguntas">0</span>
+                        </div>
+                        <div class="temporizador">
+                            ⏱️ <span class="tiempo-transcurrido">00:00</span>
+                        </div>
+                        <div class="puntos-acumulados">
+                            Puntos: <span class="puntos">0</span>
+                        </div>
+                        <div class="monedas-ganadas">
+                            💰 <span class="monedas">0</span> monedas
+                        </div>
+                    </div>
+                    <div class="pregunta-contenedor">
+                        <h4 class="texto-pregunta"></h4>
+                        <div class="respuestas-contenedor"></div>
+                    </div>
+                    <div class="controles-juego">
+                        <button class="boton-siguiente" onclick="siguientePregunta()" style="display: none;">
+                            Siguiente Pregunta →
+                        </button>
+                        <button class="boton-terminar" onclick="terminarTrivia()" style="display: none;">
+                            Terminar Trivia
+                        </button>
+                    </div>
+                </div>
+                <button class="boton-regresar-tema" onclick="regresarATemas(${idCategoria}, '${nombreCategoria}')" style="display: none;">
+                    ← Regresar a Temas
+                </button>
+            `;
+            
+            // Enviar petición al servidor
             const formData = new FormData();
             formData.append('tema_id', idTema);
             formData.append('categoria_id', idCategoria);
@@ -1391,10 +1816,15 @@ try {
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('📦 Respuesta del servidor:', data);
+                    
                     const loadingDiv = document.querySelector('.loading-preguntas');
                     const juegoDiv = document.querySelector('.juego-trivia');
+                    const botonRegresar = document.querySelector('.boton-regresar-tema');
                     
-                    if (data.status === 'success') {
+                    if (data.status === 'success' && data.data && data.data.length > 0) {
+                        console.log(`✅ Preguntas cargadas: ${data.data.length}`);
+                        
                         // Ocultar loading
                         loadingDiv.style.display = 'none';
                         
@@ -1402,35 +1832,183 @@ try {
                         preguntasTrivia = data.data;
                         preguntaActual = 0;
                         puntosAcumulados = 0;
+                        monedasGanadas = 0;
+                        respuestasCorrectas = 0;
                         tiempoInicio = null;
                         tiempoFinal = null;
+                        categoriaActual = nombreCategoria;
+                        
+                        console.log('🎮 Variables del juego inicializadas:', {
+                            totalPreguntas: preguntasTrivia.length,
+                            categoria: categoriaActual,
+                            preguntaActual: preguntaActual
+                        });
                         
                         // Actualizar contador total de preguntas
                         document.querySelector('.total-preguntas').textContent = preguntasTrivia.length;
                         
-                        // Mostrar juego y cargar primera pregunta
+                        // Mostrar juego y botón regresar
                         juegoDiv.style.display = 'block';
+                        botonRegresar.style.display = 'block';
+                        
+                        // Cargar y mostrar primera pregunta
                         mostrarPregunta();
                         
                     } else {
+                        console.error('❌ No hay preguntas disponibles');
                         loadingDiv.innerHTML = `
-                            <div class="error-loading">
-                                <p>❌ ${data.message}</p>
-                                <p>No se pudieron cargar las preguntas</p>
+                            <div class="error-loading" style="text-align: center; padding: 30px;">
+                                <h4 style="color: #dc3545; margin-bottom: 15px;">❌ Sin Preguntas Disponibles</h4>
+                                <p style="margin-bottom: 20px;">${data.message || 'No se encontraron preguntas para este tema.'}</p>
+                                <button onclick="regresarATemas(${idCategoria}, '${nombreCategoria}')" 
+                                        style="background: #533483; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                    ← Regresar a Temas
+                                </button>
                             </div>
                         `;
+                        
+                        // Mostrar botón regresar
+                        botonRegresar.style.display = 'block';
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('❌ Error en cargarPreguntas:', error);
                     const loadingDiv = document.querySelector('.loading-preguntas');
                     loadingDiv.innerHTML = `
-                        <div class="error-loading">
-                            <p>❌ Error de conexión</p>
-                            <p>No se pudieron cargar las preguntas</p>
+                        <div class="error-loading" style="text-align: center; padding: 30px;">
+                            <h4 style="color: #dc3545; margin-bottom: 15px;">❌ Error de Conexión</h4>
+                            <p style="margin-bottom: 20px;">No se pudieron cargar las preguntas. Verifica tu conexión.</p>
+                            <button onclick="regresarATemas(${idCategoria}, '${nombreCategoria}')" 
+                                    style="background: #533483; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                ← Regresar a Temas
+                            </button>
                         </div>
                     `;
+                    
+                    // Mostrar botón regresar
+                    const botonRegresar = document.querySelector('.boton-regresar-tema');
+                    if (botonRegresar) botonRegresar.style.display = 'block';
                 });
+        }
+        
+        // Función para abrir el código QR en modal
+        function abrirCodigoQR() {
+            console.log('🔗 Mostrando código QR para descarga móvil...');
+            
+            const modal = document.getElementById('modalQR');
+            const loading = document.getElementById('loadingQRModal');
+            const contenedor = document.getElementById('contenedorQRModal');
+            const imagen = document.getElementById('imagenQRModal');
+            
+            // Mostrar modal
+            modal.style.display = 'block';
+            loading.style.display = 'block';
+            contenedor.style.display = 'none';
+            
+            // Obtener URL de descarga
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const path = window.location.pathname.replace('/inicio.php', '');
+            const downloadURL = `${protocol}//${host}${path}/descargarEstadisticas.php`;
+            
+            // Generar código QR usando API gratuita
+            const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(downloadURL)}`;
+            
+            // Cargar imagen QR
+            imagen.onload = function() {
+                loading.style.display = 'none';
+                contenedor.style.display = 'block';
+            };
+            
+            imagen.onerror = function() {
+                loading.innerHTML = '<p style="color: #dc3545;">❌ Error al generar código QR</p>';
+            };
+            
+            imagen.src = qrURL;
+            
+            // Guardar URL para otras funciones
+            window.currentDownloadURL = downloadURL;
+        }
+        
+        // Función para cerrar modal QR
+        function cerrarModalQR() {
+            const modal = document.getElementById('modalQR');
+            modal.style.display = 'none';
+        }
+        
+        // Función para descarga directa
+        function abrirDescargaDirecta() {
+            if (window.currentDownloadURL) {
+                window.open(window.currentDownloadURL, '_blank');
+            } else {
+                window.open('descargarEstadisticas.php', '_blank');
+            }
+        }
+        
+        // Función para copiar URL de descarga
+        function copiarURLDescarga() {
+            const url = window.currentDownloadURL || 'descargarEstadisticas.php';
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function() {
+                    alert('✅ URL copiada al portapapeles');
+                }, function(err) {
+                    console.error('Error al copiar: ', err);
+                    copiarURLFallback(url);
+                });
+            } else {
+                copiarURLFallback(url);
+            }
+        }
+        
+        // Función fallback para copiar URL
+        function copiarURLFallback(url) {
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('✅ URL copiada al portapapeles');
+                } else {
+                    alert('❌ No se pudo copiar la URL. Cópiala manualmente.');
+                }
+            } catch (err) {
+                console.error('Error al copiar: ', err);
+                alert('❌ No se pudo copiar la URL. Cópiala manualmente.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Función para compartir por WhatsApp desde modal
+        function compartirWhatsAppModal() {
+            const url = window.currentDownloadURL || 'descargarEstadisticas.php';
+            const usuario = '<?php echo addslashes($usuario_nombre); ?>';
+            const mensaje = `🧠 ReichMind - Mis Estadísticas de Trivia\n\n📊 Descarga mis resultados en Excel:\n${url}\n\n¡Mira qué tal lo estoy haciendo! 🎯\n\nUsuario: ${usuario}`;
+            const whatsappURL = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            
+            window.open(whatsappURL, '_blank');
+        }
+        
+        // Cerrar modal QR al hacer clic fuera de él
+        window.onclick = function(event) {
+            const modalQR = document.getElementById('modalQR');
+            const modalAvatar = document.getElementById('modalAvatar');
+            const modalBloqueo = document.getElementById('modalBloqueo');
+            
+            if (event.target === modalQR) {
+                cerrarModalQR();
+            }
+            if (event.target === modalAvatar) {
+                cerrarModalAvatar();
+            }
+            if (event.target === modalBloqueo) {
+                cerrarModalBloqueo();
+            }
         }
 
         // funcion para mostrar la pregunta actual
@@ -1444,9 +2022,13 @@ try {
                 console.log('⏱️ Temporizador iniciado:', tiempoInicio);
             }
             
+            // Registrar tiempo de inicio de esta pregunta específica
+            tiempoInicioPregunta = new Date();
+            
             // Actualizar contador de pregunta
             document.querySelector('.pregunta-actual').textContent = preguntaActual + 1;
             document.querySelector('.puntos').textContent = puntosAcumulados;
+            document.querySelector('.monedas').textContent = monedasGanadas;
             
             // Mostrar texto de la pregunta
             document.querySelector('.texto-pregunta').textContent = pregunta.texto_pregunta;
@@ -1470,12 +2052,46 @@ try {
             document.querySelector('.boton-terminar').style.display = 'none';
         }
 
+        // Función para calcular monedas ganadas por respuesta correcta
+        function calcularMonedasPorRespuesta(esCorrecta, tiempoRespuesta = null) {
+            if (!esCorrecta) return 0;
+            
+            let monedasBase = 8; // Base por respuesta correcta (reducido para balance)
+            
+            // Bonificación por velocidad de respuesta
+            if (tiempoRespuesta !== null) {
+                if (tiempoRespuesta < 10) {
+                    monedasBase += 7; // Muy rápido (menos de 10 segundos)
+                } else if (tiempoRespuesta < 20) {
+                    monedasBase += 4; // Rápido (menos de 20 segundos)
+                } else if (tiempoRespuesta < 30) {
+                    monedasBase += 2; // Normal (menos de 30 segundos)
+                }
+                // Sin bonificación si toma más de 30 segundos
+            }
+            
+            // Bonificación por categoría (multiplicador)
+            const bonificacionCategoria = {
+                'Principiante': 1.0,  // Sin bonificación extra
+                'Novato': 1.3,       // +30%
+                'Experto': 1.6       // +60%
+            };
+            
+            const multiplicador = bonificacionCategoria[categoriaActual] || 1.0;
+            
+            return Math.floor(monedasBase * multiplicador);
+        }
+
         // funcion para seleccionar una respuesta
         function seleccionarRespuesta(indiceRespuesta, esCorrecta) {
             if (respuestaSeleccionada !== null) return; // Ya se seleccionó una respuesta
             
             respuestaSeleccionada = indiceRespuesta;
             const botonesRespuesta = document.querySelectorAll('.boton-respuesta');
+            
+            // Calcular tiempo de respuesta para esta pregunta específica
+            const tiempoActual = new Date();
+            const tiempoRespuesta = tiempoInicioPregunta ? Math.floor((tiempoActual - tiempoInicioPregunta) / 1000) : 0;
             
             // Si es la última pregunta, detener el temporizador
             if (preguntaActual === preguntasTrivia.length - 1) {
@@ -1497,10 +2113,25 @@ try {
                 }
             });
             
-            // Actualizar puntos si es correcta
+            // Actualizar puntos y monedas si es correcta
             if (esCorrecta) {
+                respuestasCorrectas++;
                 puntosAcumulados += preguntasTrivia[preguntaActual].puntos;
+                
+                // Calcular monedas ganadas por esta respuesta
+                const monedasPorRespuesta = calcularMonedasPorRespuesta(esCorrecta, tiempoRespuesta);
+                monedasGanadas += monedasPorRespuesta;
+                
+                // Mostrar feedback visual de monedas ganadas
+                if (monedasPorRespuesta > 0) {
+                    mostrarFeedbackMonedas(monedasPorRespuesta, tiempoRespuesta < 15);
+                }
+                
+                // Actualizar displays
                 document.querySelector('.puntos').textContent = puntosAcumulados;
+                document.querySelector('.monedas').textContent = monedasGanadas;
+                
+                console.log(`💰 Monedas ganadas por respuesta: ${monedasPorRespuesta} (Tiempo: ${tiempoRespuesta}s)`);
             }
             
             // Mostrar botón para continuar
@@ -1509,6 +2140,77 @@ try {
             } else {
                 document.querySelector('.boton-terminar').style.display = 'inline-block';
             }
+        }
+
+        // Función para mostrar feedback visual de monedas ganadas
+        function mostrarFeedbackMonedas(cantidad, esRapida = false) {
+            const contenedorJuego = document.querySelector('.juego-trivia');
+            
+            // Crear elemento de feedback
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: ${esRapida ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'linear-gradient(45deg, #28a745, #20c997)'};
+                color: white;
+                padding: 12px 18px;
+                border-radius: 25px;
+                font-weight: bold;
+                font-size: 15px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                animation: feedbackAnimation 3s ease-in-out forwards;
+                z-index: 1000;
+                pointer-events: none;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            `;
+            
+            let texto = `💰 +${cantidad}`;
+            if (esRapida) {
+                texto += ' ⚡'; // Icono de velocidad
+            }
+            
+            feedback.innerHTML = texto;
+            
+            // Agregar estilos de animación si no existen
+            if (!document.getElementById('feedbackStyles')) {
+                const style = document.createElement('style');
+                style.id = 'feedbackStyles';
+                style.textContent = `
+                    @keyframes feedbackAnimation {
+                        0% { 
+                            opacity: 0; 
+                            transform: translateY(-10px) scale(0.8); 
+                        }
+                        15% { 
+                            opacity: 1; 
+                            transform: translateY(0) scale(1.2); 
+                        }
+                        25% { 
+                            transform: translateY(0) scale(1); 
+                        }
+                        85% { 
+                            opacity: 1; 
+                            transform: translateY(0) scale(1); 
+                        }
+                        100% { 
+                            opacity: 0; 
+                            transform: translateY(-30px) scale(0.6); 
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Agregar al contenedor y remover después de la animación
+            contenedorJuego.style.position = 'relative';
+            contenedorJuego.appendChild(feedback);
+            
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    feedback.remove();
+                }
+            }, 3000);
         }
 
         // funcion para avanzar a la siguiente pregunta
@@ -1573,6 +2275,10 @@ try {
             
             const porcentaje = ((puntosAcumulados / (preguntasTrivia.length * 10)) * 100).toFixed(1);
             
+            // Calcular bonificaciones finales
+            const bonificacionesFinales = calcularBonificacionesFinales(porcentaje, tiempoTotalSegundos, respuestasCorrectas);
+            const monedasTotales = monedasGanadas + bonificacionesFinales;
+            
             // Verificar si puede subir de nivel (solo si tiene 100% de aciertos)
             let resultadoNivel = { actualizado: false };
             if (porcentaje == 100 && categoriaActual) {
@@ -1580,10 +2286,21 @@ try {
                 resultadoNivel = await verificarActualizacionNivel(categoriaActual, porcentaje);
             }
             
+            // Enviar monedas al servidor para actualizar la base de datos
+            const resultadoMonedas = await actualizarMonedasUsuario(monedasTotales, categoriaActual, porcentaje, tiempoTotalSegundos);
+            
             let mensaje = `🎉 ¡Trivia Completada! 🎉\n\n`;
             mensaje += `📊 Puntuación: ${puntosAcumulados} / ${preguntasTrivia.length * 10} puntos\n`;
             mensaje += `📈 Porcentaje: ${porcentaje}%\n`;
-            mensaje += `⏱️ Tiempo total: ${tiempoFormateado}\n\n`;
+            mensaje += `⏱️ Tiempo total: ${tiempoFormateado}\n`;
+            mensaje += `💰 Monedas ganadas: ${monedasTotales}\n`;
+            
+            // Desglose de monedas si hay bonificaciones
+            if (bonificacionesFinales > 0) {
+                mensaje += `   └ Por respuestas: ${monedasGanadas}\n`;
+                mensaje += `   └ Bonificaciones: ${bonificacionesFinales}\n`;
+            }
+            mensaje += `\n`;
             
             // Agregar mensaje especial si subió de nivel
             if (resultadoNivel.actualizado) {
@@ -1611,6 +2328,28 @@ try {
                 }
             }
             
+            // Mostrar información sobre el estado de las monedas y partidas ganadas
+            if (resultadoMonedas.success) {
+                mensaje += `\n\n💰 Tus monedas totales: ${resultadoMonedas.monedas_nuevas}`;
+                
+                // Mostrar mensaje especial si ganó la partida
+                if (resultadoMonedas.es_partida_ganada) {
+                    mensaje += `\n🏆 ¡Partida ganada! Total: ${resultadoMonedas.partidas_ganadas_nuevas}`;
+                }
+                
+                // Mostrar mensaje si falló la partida
+                if (resultadoMonedas.es_partida_fallida) {
+                    mensaje += `\n❌ Partida fallida. Total fallidas: ${resultadoMonedas.partidas_fallidas_nuevas}`;
+                }
+                
+                // Mostrar resumen detallado de monedas después del alert principal
+                setTimeout(() => {
+                    mostrarResumenMonedas(monedasGanadas, bonificacionesFinales, monedasTotales);
+                }, 500);
+            } else {
+                mensaje += `\n\n⚠️ Hubo un problema al actualizar las monedas: ${resultadoMonedas.message}`;
+            }
+            
             alert(mensaje);
             
             // Si el nivel fue actualizado, actualizar la interfaz
@@ -1618,11 +2357,395 @@ try {
                 actualizarInterfazNivel(resultadoNivel.nivelNuevo);
             }
             
+            // Actualizar display de monedas y partidas ganadas en la interfaz si fue exitoso
+            if (resultadoMonedas.success) {
+                actualizarDisplayMonedas(resultadoMonedas.monedas_nuevas);
+                if (resultadoMonedas.es_partida_ganada) {
+                    actualizarDisplayPartidasGanadas(resultadoMonedas.partidas_ganadas_nuevas);
+                }
+                if (resultadoMonedas.es_partida_fallida) {
+                    actualizarDisplayPartidasFallidas(resultadoMonedas.partidas_fallidas_nuevas);
+                }
+            }
+            
             // Agregar a las estadísticas con el tiempo real
             agregarPuntosTiempo(puntosAcumulados, tiempoFormateado);
+            agregarMoneda(monedasTotales);
+            
+            // Verificar si se desbloquearon nuevas categorías
+            verificarDesbloqueoCategoria();
             
             // Regresar al panel principal
             regresarPanelPrincipal();
+        }
+        
+        // Función para verificar si se desbloquearon nuevas categorías
+        function verificarDesbloqueoCategoria() {
+            console.log('🔓 Verificando desbloqueo de categorías...');
+            
+            // Verificar si hay algún contenedor de categorías visible
+            const contenedorCategorias = document.querySelector('.contenedor-categorias');
+            if (contenedorCategorias && contenedorCategorias.style.display !== 'none') {
+                // Si el usuario está en la pantalla de selección de categorías, recargarlas
+                const botonesDiv = document.querySelector('.botones-categorias');
+                if (botonesDiv && botonesDiv.style.display !== 'none') {
+                    console.log('🔄 Recargando categorías por posible desbloqueo...');
+                    cargarCategorias();
+                    
+                    // Mostrar notificación si se desbloqueó algo nuevo
+                    setTimeout(() => {
+                        verificarNotificacionDesbloqueo();
+                    }, 500);
+                }
+            }
+        }
+        
+        // Función para verificar y mostrar notificación de categorías desbloqueadas
+        function verificarNotificacionDesbloqueo() {
+            const monedasActuales = monedasUsuarioActual;
+            const nivelActual = nivelUsuarioActual;
+            
+            // Guardar estados anteriores para comparar
+            if (!window.estadosCategoriasAnteriores) {
+                window.estadosCategoriasAnteriores = {
+                    novato: false,
+                    experto: false
+                };
+            }
+            
+            // Verificar qué categorías están ahora disponibles
+            let categoriasDesbloqueadas = [];
+            
+            // Verificar Novato
+            const novatoDisponible = monedasActuales >= 150;
+            if (novatoDisponible && !window.estadosCategoriasAnteriores.novato) {
+                categoriasDesbloqueadas.push('Novato');
+            }
+            window.estadosCategoriasAnteriores.novato = novatoDisponible;
+            
+            // Verificar Experto
+            const expertoDisponible = monedasActuales >= 200 && (nivelActual === 'Novato' || nivelActual === 'Experto');
+            if (expertoDisponible && !window.estadosCategoriasAnteriores.experto) {
+                categoriasDesbloqueadas.push('Experto');
+            }
+            window.estadosCategoriasAnteriores.experto = expertoDisponible;
+            
+            // Mostrar notificación si hay categorías desbloqueadas
+            if (categoriasDesbloqueadas.length > 0) {
+                let mensaje = categoriasDesbloqueadas.length === 1 ? 
+                    `🎉 ¡Nueva categoría desbloqueada: ${categoriasDesbloqueadas[0]}!` : 
+                    `🎉 ¡Nuevas categorías desbloqueadas: ${categoriasDesbloqueadas.join(' y ')}!`;
+                
+                mostrarNotificacion(mensaje, 'exito');
+                
+                // Agregar efecto visual a los botones desbloqueados
+                setTimeout(() => {
+                    categoriasDesbloqueadas.forEach(categoria => {
+                        const boton = Array.from(document.querySelectorAll('.boton-categoria')).find(btn => 
+                            btn.textContent.includes(categoria)
+                        );
+                        if (boton) {
+                            boton.style.animation = 'pulseUnlock 2s ease-in-out';
+                            setTimeout(() => {
+                                boton.style.animation = '';
+                            }, 2000);
+                        }
+                    });
+                }, 600);
+            }
+        }
+        
+        // Función para calcular bonificaciones finales
+        function calcularBonificacionesFinales(porcentaje, tiempoTotal, respuestasCorrectas) {
+            let bonificacion = 0;
+            
+            // Bonificación base por completar la trivia
+            if (respuestasCorrectas > 0) {
+                bonificacion += 5; // Bonificación base por participación
+            }
+            
+            // Bonificación por porcentaje de aciertos
+            if (porcentaje >= 100) {
+                bonificacion += 50; // Perfección total
+            } else if (porcentaje >= 90) {
+                bonificacion += 35; // Excelencia
+            } else if (porcentaje >= 80) {
+                bonificacion += 20; // Muy bueno
+            } else if (porcentaje >= 70) {
+                bonificacion += 10; // Bueno
+            } else if (porcentaje >= 60) {
+                bonificacion += 5;  // Aceptable
+            }
+            
+            // Bonificación por eficiencia en tiempo
+            const totalPreguntas = preguntasTrivia.length;
+            const tiempoPromedioPorPregunta = tiempoTotal / totalPreguntas;
+            
+            if (tiempoPromedioPorPregunta < 30 && porcentaje >= 70) {
+                bonificacion += 25; // Muy eficiente
+            } else if (tiempoPromedioPorPregunta < 60 && porcentaje >= 60) {
+                bonificacion += 15; // Eficiente
+            }
+            
+            // Bonificación por categoría de dificultad
+            const bonificacionDificultad = {
+                'Principiante': 5,   // Bonificación mínima
+                'Novato': 10,        // Bonificación media
+                'Experto': 20        // Bonificación alta
+            };
+            
+            bonificacion += bonificacionDificultad[categoriaActual] || 0;
+            
+            // Bonificación extra por racha de respuestas correctas consecutivas
+            if (respuestasCorrectas === totalPreguntas) {
+                bonificacion += 30; // Todas las respuestas correctas
+            } else if (respuestasCorrectas >= totalPreguntas * 0.8) {
+                bonificacion += 15; // Al menos 80% correctas
+            }
+            
+            return bonificacion;
+        }
+        
+        // Función para actualizar monedas del usuario en el servidor
+        async function actualizarMonedasUsuario(monedasGanadas, categoria, porcentaje, tiempoTotal) {
+            try {
+                const response = await fetch('actualizarMonedas.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        monedas_ganadas: monedasGanadas,
+                        categoria: categoria,
+                        porcentaje: parseFloat(porcentaje),
+                        tiempo_total: tiempoTotal
+                    })
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    console.log(`💰 Monedas actualizadas: +${monedasGanadas} (Total: ${resultado.monedas_nuevas})`);
+                }
+                
+                return resultado;
+            } catch (error) {
+                console.error('Error al actualizar monedas:', error);
+                return { success: false, message: 'Error de conexión' };
+            }
+        }
+        
+        // Función para actualizar el display de monedas en la interfaz
+        function actualizarDisplayMonedas(nuevasMonedas) {
+            // Actualizar variable global de monedas
+            monedasUsuarioActual = nuevasMonedas;
+            
+            // Actualizar usando ID específico
+            const displayMonedas = document.getElementById('display-monedas');
+            if (displayMonedas) {
+                displayMonedas.textContent = number_format(nuevasMonedas);
+                
+                // Agregar efecto visual de actualización
+                displayMonedas.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                setTimeout(() => {
+                    displayMonedas.style.animation = '';
+                }, 600);
+            }
+            
+            console.log(`💰 Monedas actualizadas en interfaz: ${nuevasMonedas}`);
+        }
+        
+        // Función auxiliar para formatear números (similar a PHP number_format)
+        function number_format(number) {
+            return new Intl.NumberFormat('es-ES').format(number);
+        }
+        
+        // Función para actualizar el display de partidas ganadas en la interfaz
+        function actualizarDisplayPartidasGanadas(nuevasPartidasGanadas) {
+            // Actualizar variable global de partidas ganadas
+            partidasGanadasActual = nuevasPartidasGanadas;
+            
+            // Actualizar usando ID específico
+            const displayPartidasGanadas = document.getElementById('display-partidas-ganadas');
+            if (displayPartidasGanadas) {
+                displayPartidasGanadas.textContent = number_format(nuevasPartidasGanadas);
+                
+                // Agregar efecto visual de actualización
+                displayPartidasGanadas.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                setTimeout(() => {
+                    displayPartidasGanadas.style.animation = '';
+                }, 600);
+            }
+            
+            console.log(`🏆 Partidas ganadas actualizadas en interfaz: ${nuevasPartidasGanadas}`);
+        }
+        
+        // Función para actualizar el display de partidas fallidas en la interfaz
+        function actualizarDisplayPartidasFallidas(nuevasPartidasFallidas) {
+            // Actualizar variable global de partidas fallidas
+            partidasFallidasActual = nuevasPartidasFallidas;
+            
+            // Actualizar usando ID específico
+            const displayPartidasFallidas = document.getElementById('display-partidas-fallidas');
+            if (displayPartidasFallidas) {
+                displayPartidasFallidas.textContent = number_format(nuevasPartidasFallidas);
+                
+                // Agregar efecto visual de actualización (en rojo para fallidas)
+                displayPartidasFallidas.style.animation = 'pulseUpdateFallida 0.6s ease-in-out';
+                setTimeout(() => {
+                    displayPartidasFallidas.style.animation = '';
+                }, 600);
+            }
+            
+            console.log(`❌ Partidas fallidas actualizadas en interfaz: ${nuevasPartidasFallidas}`);
+        }
+        
+        // Función para actualizar el display del nivel en la interfaz
+        function actualizarDisplayNivel(nuevoNivel) {
+            // Actualizar variable global del nivel
+            nivelUsuarioActual = nuevoNivel;
+            
+            // Convertir el nivel a número para mostrar
+            let nivelNumero = '';
+            let colorNivel = '';
+            let emojiNivel = '';
+            
+            switch(nuevoNivel) {
+                case 'Principiante':
+                    nivelNumero = '1';
+                    colorNivel = '#4CAF50';
+                    emojiNivel = '🌱';
+                    break;
+                case 'Novato':
+                    nivelNumero = '2';
+                    colorNivel = '#FF9800';
+                    emojiNivel = '⚡';
+                    break;
+                case 'Experto':
+                    nivelNumero = '3';
+                    colorNivel = '#F44336';
+                    emojiNivel = '🔥';
+                    break;
+                default:
+                    nivelNumero = '-';
+                    colorNivel = '#9E9E9E';
+                    emojiNivel = '❓';
+            }
+            
+            // Actualizar el número del nivel en las estadísticas
+            const displayNivel = document.getElementById('display-nivel');
+            if (displayNivel) {
+                displayNivel.textContent = nivelNumero;
+                
+                // Agregar efecto visual de actualización con color del nivel
+                displayNivel.style.animation = 'pulseUpdateNivel 0.8s ease-in-out';
+                displayNivel.style.color = colorNivel;
+                setTimeout(() => {
+                    displayNivel.style.animation = '';
+                    displayNivel.style.color = '';
+                }, 800);
+            }
+            
+            // Actualizar el texto del nivel en el perfil
+            const nivelUsuarioElement = document.querySelector('.nivel-usuario');
+            if (nivelUsuarioElement) {
+                nivelUsuarioElement.textContent = `Nivel: ${nuevoNivel}`;
+                
+                // Agregar efecto visual
+                nivelUsuarioElement.style.animation = 'pulseUpdate 0.6s ease-in-out';
+                setTimeout(() => {
+                    nivelUsuarioElement.style.animation = '';
+                }, 600);
+            }
+            
+            // Actualizar el indicador de nivel en el avatar
+            const indicadorNivel = document.querySelector('.indicador-nivel');
+            if (indicadorNivel) {
+                indicadorNivel.style.background = colorNivel;
+                indicadorNivel.textContent = emojiNivel;
+                
+                // Agregar efecto visual de pulsación
+                indicadorNivel.style.animation = 'pulseAvatar 0.8s ease-in-out';
+                setTimeout(() => {
+                    indicadorNivel.style.animation = '';
+                }, 800);
+            }
+            
+            console.log(`⭐ Nivel actualizado en interfaz: ${nuevoNivel} (${nivelNumero})`);
+        }
+        
+        // Función para mostrar resumen detallado de monedas ganadas
+        function mostrarResumenMonedas(monedasPorRespuestas, bonificaciones, total) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #533483, #7b2cbf);
+                    color: white;
+                    padding: 30px;
+                    border-radius: 20px;
+                    max-width: 500px;
+                    text-align: center;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+                    animation: slideIn 0.3s ease;
+                ">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                    <h2 style="color: #FFD700; margin-bottom: 20px;">¡Monedas Ganadas!</h2>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0;">
+                        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                            <span>💡 Respuestas correctas:</span>
+                            <span style="color: #FFD700; font-weight: bold;">${monedasPorRespuestas} monedas</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                            <span>🏆 Bonificaciones:</span>
+                            <span style="color: #FFD700; font-weight: bold;">${bonificaciones} monedas</span>
+                        </div>
+                        <hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;">
+                            <span>💰 Total:</span>
+                            <span style="color: #FFD700;">${total} monedas</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: linear-gradient(45deg, #FFD700, #FFA500);
+                        color: #333;
+                        border: none;
+                        padding: 12px 25px;
+                        border-radius: 25px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        font-size: 16px;
+                        margin-top: 15px;
+                        transition: transform 0.2s ease;
+                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        ¡Genial!
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Remover automáticamente después de 8 segundos
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 8000);
         }
         
         // Función para verificar si el usuario puede subir de nivel
@@ -1658,31 +2781,8 @@ try {
         function actualizarInterfazNivel(nuevoNivel) {
             console.log('🔄 Actualizando interfaz para nuevo nivel:', nuevoNivel);
             
-            // Actualizar el nivel mostrado en el perfil
-            const nivelUsuarioElement = document.querySelector('.nivel-usuario');
-            if (nivelUsuarioElement) {
-                nivelUsuarioElement.textContent = `Nivel: ${nuevoNivel}`;
-            }
-            
-            // Actualizar el número de nivel en las estadísticas
-            const numeroNivelElement = document.querySelector('.numero-estadistica');
-            if (numeroNivelElement && numeroNivelElement.parentElement.querySelector('.etiqueta-estadistica').textContent === 'Nivel') {
-                let numeroNivel = '';
-                switch(nuevoNivel) {
-                    case 'Principiante':
-                        numeroNivel = '1';
-                        break;
-                    case 'Novato':
-                        numeroNivel = '2';
-                        break;
-                    case 'Experto':
-                        numeroNivel = '3';
-                        break;
-                    default:
-                        numeroNivel = '-';
-                }
-                numeroNivelElement.textContent = numeroNivel;
-            }
+            // Usar la función específica para actualizar el display del nivel
+            actualizarDisplayNivel(nuevoNivel);
             
             // Mostrar una animación de celebración
             mostrarAnimacionSubidaNivel(nuevoNivel);
@@ -1795,43 +2895,104 @@ try {
 
         // funcion para descargar estadisticas
         function descargarEstadisticas() {
-            console.log('Descargando estadísticas...');
+            console.log('📊 Descargando estadísticas en formato Excel...');
             
-            // Crear contenido del archivo
-            const estadisticas = {
-                usuario: document.getElementById('username-display').textContent,
-                fecha: new Date().toLocaleDateString(),
-                monedas: Array.from(document.querySelectorAll('#lista-monedas li:not(.lista-vacia)')).map(li => li.textContent),
-                puntosTiempo: Array.from(document.querySelectorAll('#lista-puntos-tiempo li:not(.lista-vacia)')).map(li => li.textContent)
-            };
+            // Mostrar mensaje de carga
+            const botonDescargar = document.querySelector('.boton-descargar');
+            const textoOriginal = botonDescargar.innerHTML;
+            botonDescargar.innerHTML = '⏳ Generando Excel...';
+            botonDescargar.disabled = true;
             
-            const contenido = `
-ESTADÍSTICAS DE TRIVIA - REICHMIND
-=====================================
-Usuario: ${estadisticas.usuario}
-Fecha: ${estadisticas.fecha}
+            try {
+                // Crear un enlace temporal para descargar
+                const enlace = document.createElement('a');
+                enlace.href = 'descargarExcel.php';
+                enlace.download = `estadisticas_trivia_${new Date().toISOString().split('T')[0]}.xlsx`;
+                enlace.style.display = 'none';
+                
+                // Agregar al DOM, hacer clic y remover
+                document.body.appendChild(enlace);
+                enlace.click();
+                document.body.removeChild(enlace);
+                
+                // Restaurar botón después de un breve delay
+                setTimeout(() => {
+                    botonDescargar.innerHTML = textoOriginal;
+                    botonDescargar.disabled = false;
+                    
+                    // Mostrar notificación de éxito
+                    mostrarNotificacion('✅ Archivo Excel descargado correctamente', 'exito');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('❌ Error al descargar estadísticas:', error);
+                
+                // Restaurar botón en caso de error
+                botonDescargar.innerHTML = textoOriginal;
+                botonDescargar.disabled = false;
+                
+                // Mostrar notificación de error
+                mostrarNotificacion('❌ Error al generar el archivo Excel', 'error');
+            }
+        }
 
-MONEDAS GANADAS:
-${estadisticas.monedas.length > 0 ? estadisticas.monedas.join('\n') : 'No hay registros'}
-
-PUNTOS Y TIEMPO:
-${estadisticas.puntosTiempo.length > 0 ? estadisticas.puntosTiempo.join('\n') : 'No hay registros'}
-
-Generado automáticamente por ReichMind
-            `.trim();
+        // Función auxiliar para mostrar notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            // Crear elemento de notificación
+            const notificacion = document.createElement('div');
+            notificacion.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transition: all 0.3s ease;
+                opacity: 0;
+                transform: translateY(-20px);
+            `;
             
-            // Crear y descargar archivo
-            const blob = new Blob([contenido], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `estadisticas_trivia_${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            // Configurar colores según el tipo
+            switch (tipo) {
+                case 'exito':
+                    notificacion.style.background = '#28a745';
+                    break;
+                case 'error':
+                    notificacion.style.background = '#dc3545';
+                    break;
+                case 'advertencia':
+                    notificacion.style.background = '#ffc107';
+                    notificacion.style.color = '#212529';
+                    break;
+                default:
+                    notificacion.style.background = '#17a2b8';
+            }
             
-            alert('📊 Estadísticas descargadas correctamente');
+            notificacion.innerHTML = mensaje;
+            
+            // Agregar al DOM
+            document.body.appendChild(notificacion);
+            
+            // Animar entrada
+            setTimeout(() => {
+                notificacion.style.opacity = '1';
+                notificacion.style.transform = 'translateY(0)';
+            }, 100);
+            
+            // Remover después de 4 segundos
+            setTimeout(() => {
+                notificacion.style.opacity = '0';
+                notificacion.style.transform = 'translateY(-20px)';
+                
+                setTimeout(() => {
+                    if (notificacion.parentNode) {
+                        notificacion.parentNode.removeChild(notificacion);
+                    }
+                }, 300);
+            }, 4000);
         }
 
         // Variables globales para el cambio de avatar
@@ -2097,6 +3258,140 @@ Generado automáticamente por ReichMind
                 // Redirigir a página de logout que destruye la sesión
                 window.location.href = 'logout.php';
             }
+        }
+        
+        // Función para iniciar el temporizador del juego
+        function iniciarTemporizador() {
+            console.log('⏱️ Iniciando temporizador...');
+            
+            const elemento = document.querySelector('.tiempo-transcurrido');
+            if (!elemento) {
+                console.warn('⚠️ Elemento del temporizador no encontrado');
+                return;
+            }
+            
+            temporizadorIntervalo = setInterval(() => {
+                if (tiempoInicio) {
+                    const tiempoActual = new Date();
+                    const diferencia = Math.floor((tiempoActual - tiempoInicio) / 1000);
+                    
+                    const minutos = Math.floor(diferencia / 60);
+                    const segundos = diferencia % 60;
+                    
+                    elemento.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+        
+        // Función para detener el temporizador
+        function detenerTemporizador() {
+            if (temporizadorIntervalo) {
+                clearInterval(temporizadorIntervalo);
+                temporizadorIntervalo = null;
+                console.log('⏱️ Temporizador detenido');
+            }
+        }
+        
+        // Función para ir a la siguiente pregunta
+        function siguientePregunta() {
+            console.log('➡️ Siguiente pregunta...');
+            
+            if (preguntaActual < preguntasTrivia.length - 1) {
+                preguntaActual++;
+                mostrarPregunta();
+            } else {
+                // Era la última pregunta, mostrar resultados
+                terminarTrivia();
+            }
+        }
+        
+        // Función para mostrar los resultados de la trivia
+        function mostrarResultadosTrivia(tiempoTotal, dataServidor) {
+            const contenedorCategorias = document.querySelector('.contenedor-categorias');
+            
+            const minutos = Math.floor(tiempoTotal / 60);
+            const segundos = tiempoTotal % 60;
+            const tiempoFormateado = `${minutos}:${segundos.toString().padStart(2, '0')}`;
+            
+            const porcentajeAciertos = Math.round((respuestasCorrectas / preguntasTrivia.length) * 100);
+            const esPartidaGanada = respuestasCorrectas === preguntasTrivia.length;
+            
+            let mensajeResultado = '';
+            let colorResultado = '';
+            let iconoResultado = '';
+            
+            if (esPartidaGanada) {
+                mensajeResultado = '¡Perfecto! 🎉';
+                colorResultado = '#28a745';
+                iconoResultado = '🏆';
+            } else if (porcentajeAciertos >= 70) {
+                mensajeResultado = '¡Muy bien! 👏';
+                colorResultado = '#ffc107';
+                iconoResultado = '⭐';
+            } else if (porcentajeAciertos >= 50) {
+                mensajeResultado = 'Puedes mejorar 💪';
+                colorResultado = '#17a2b8';
+                iconoResultado = '📚';
+            } else {
+                mensajeResultado = 'Sigue practicando 📖';
+                colorResultado = '#dc3545';
+                iconoResultado = '🎯';
+            }
+            
+            contenedorCategorias.innerHTML = `
+                <div class="resultados-trivia" style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">${iconoResultado}</div>
+                    <h2 style="color: ${colorResultado}; margin-bottom: 15px;">${mensajeResultado}</h2>
+                    <h3 style="margin-bottom: 30px;">Resultados de ${categoriaActual}</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin: 20px 0;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #28a745;">${respuestasCorrectas}</div>
+                                <div>Respuestas Correctas</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #17a2b8;">${porcentajeAciertos}%</div>
+                                <div>Porcentaje de Aciertos</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #ffc107;">${puntosAcumulados}</div>
+                                <div>Puntos Obtenidos</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #FFD700;">${monedasGanadas}</div>
+                                <div>Monedas Ganadas</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: bold; color: #6c757d;">${tiempoFormateado}</div>
+                                <div>Tiempo Total</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${dataServidor.status === 'success' ? 
+                        `<div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                            ✅ Resultados guardados correctamente
+                        </div>` : 
+                        `<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                            ❌ ${dataServidor.message || 'Error al guardar resultados'}
+                        </div>`
+                    }
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                        <button onclick="regresarPanelPrincipal()" style="
+                            background: #533483; color: white; border: none; padding: 12px 25px; 
+                            border-radius: 25px; cursor: pointer; font-weight: bold;">
+                            🏠 Ir al Panel Principal
+                        </button>
+                        <button onclick="iniciarNuevaPartida()" style="
+                            background: #28a745; color: white; border: none; padding: 12px 25px; 
+                            border-radius: 25px; cursor: pointer; font-weight: bold;">
+                            🎮 Nueva Partida
+                        </button>
+                    </div>
+                </div>
+            `;
         }
     </script>
 </body>

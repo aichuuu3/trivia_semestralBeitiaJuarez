@@ -63,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
-</form>
 <script>
 // Evita submit si el correo no es válido
 document.querySelector('.login-form').addEventListener('submit', function(e) {
@@ -81,7 +80,7 @@ let lastEmailValid = false;
 
 function validateEmailFormat(email) {
     // nombre.apellido o nombre.apellido1,2,3... @reichmind.com
-    const regex = /^[a-zA-Z]+\.[a-zA-Z]+\d{0,2}@reichmind\.com$/;
+    const regex = /^[a-zA-Z]+\.[a-zA-Z]+\d*@reichmind\.com$/;
     return regex.test(email);
 }
 
