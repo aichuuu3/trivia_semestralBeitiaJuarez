@@ -77,6 +77,7 @@ CREATE TABLE `colaboradores` (
   `nombre` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `avatar` varchar(255) DEFAULT 'avatar.png',
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
   `hora_inicio_actividad` time DEFAULT '09:00:00',
   `activo` tinyint(1) DEFAULT 1
@@ -86,9 +87,9 @@ CREATE TABLE `colaboradores` (
 -- Volcado de datos para la tabla `colaboradores`
 --
 
-INSERT INTO `colaboradores` (`id`, `nombre`, `email`, `password`, `fecha_registro`, `hora_inicio_actividad`, `activo`) VALUES
-(1, 'Emilia Pérez', 'emilia.perez@gmail.com', '$2y$10$2wL/BTklmjtfZmz9eb5HNeamvOR7kTVA6smyOAVfkAdT7Ttd9JHXC', '2025-07-24 05:00:00', '08:36:33', 1),
-(2, 'Fernando Delgado', 'fernando.delgado@reichmind.com', '$2y$10$qSE0wvRmCpFv3maKeoXv/eSiUmSl8Vv6jHLa2j4uI9RW4ggT0.npu', '2025-07-24 05:00:00', '09:00:23', 1);
+INSERT INTO `colaboradores` (`id`, `nombre`, `email`, `password`, `avatar`, `fecha_registro`, `hora_inicio_actividad`, `activo`) VALUES
+(1, 'Emilia Pérez', 'emilia.perez@gmail.com', '$2y$10$2wL/BTklmjtfZmz9eb5HNeamvOR7kTVA6smyOAVfkAdT7Ttd9JHXC', 'avatar.png', '2025-07-24 05:00:00', '08:36:33', 1),
+(2, 'Fernando Delgado', 'fernando.delgado@reichmind.com', '$2y$10$qSE0wvRmCpFv3maKeoXv/eSiUmSl8Vv6jHLa2j4uI9RW4ggT0.npu', 'avatar.png', '2025-07-24 05:00:00', '09:00:23', 1);
 
 -- --------------------------------------------------------
 

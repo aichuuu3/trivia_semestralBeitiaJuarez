@@ -80,6 +80,18 @@ include_once 'conexion.php';
                 return false;
             }
         }
+
+        // Actualizar avatar del colaborador
+        public function actualizarAvatarColaborador($id, $avatar) {
+            try {
+                $query = $this->pdo->prepare("UPDATE colaboradores SET avatar = :avatar WHERE id = :id");
+                $query->bindParam(":avatar", $avatar);
+                $query->bindParam(":id", $id);
+                return $query->execute();
+            } catch (PDOException $e) {
+                return false;
+            }
+        }
         
         //Método para obtener colaborador por ID
         public function obtenerColaborador($id) {
