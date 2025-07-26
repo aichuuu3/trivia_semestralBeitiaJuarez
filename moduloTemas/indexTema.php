@@ -1,7 +1,4 @@
-<?php/*
-session_start();
-$nombreUsuario = isset($_SESSION['usuario']) ? $_SESSION['usuario'] : 'Admin';
-*/?>
+
 
 <!DOCTYPE html>
 <html lang="es">
